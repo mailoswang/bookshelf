@@ -47,16 +47,24 @@ video{width:100%;border-radius:16px;background:#000;max-height:55vh;object-fit:c
 </style>
 </head>
 <body>
-<header class="glass"><button id="back" hidden>←</button><h1 id="ttl">我的書櫃</h1><button id="theme" title="切換深淺色">◐</button></header>
+<header class="glass"><button id="back" hidden>←</button><h1 id="ttl">我的書櫃</h1><button id="cfg" title="同步與備份">⚙</button><button id="theme" title="切換深淺色">◐</button></header>
 <main id="app"></main>
 <button class="fab pri glass" id="fab" title="掃描入庫">＋</button>
 <script>
 // ===== 設定：書籍資料查詢代理（需自行架設後端，因瀏覽器跨網域限制無法直接爬取紀伊國屋／誠品）=====
 // 代理需回傳 JSON: {title, author, price, cover(圖片網址或 data URI)}
 const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code="; // 例："https://your-server.example/api/isbn?code="
-const KEY="bookshelf.v1";
-let books=[];try{books=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(books))}catch(e){}};
+const KEY="bookshelf.v1",TKEY="bookshelf.tombs",CKEY="bookshelf.sync";
+let books=[],tombs=[],cfg={};
+try{books=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
+try{tombs=JSON.parse(localStorage.getItem(TKEY)||"[]")}catch(e){}
+try{cfg=JSON.parse(localStorage.getItem(CKEY)||"{}")}catch(e){}
+// 舊資料補上同步用欄位：updatedAt（最後修改時間）、coverAt（封面版本）
+books.forEach(b=>{if(b.updatedAt==null)b.updatedAt=b.date||1;if(b.cover&&b.coverAt==null){b.coverAt=b.date||1;b._up=true}});
+let rev=0;
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(TKEY,JSON.stringify(tombs))}catch(e){}};
+const saveCfg=()=>{try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}};
+const save=()=>{rev++;persist();schedSync()};
 const $=s=>document.querySelector(s), app=$("#app");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let draft=null, stream=null, timer=null;
@@ -77,6 +85,7 @@ function route(){
  if(p[1]==="book")return edit(books.find(b=>b.id===p[2]),false);
  if(p[1]==="edit")return draft?edit(draft,true):(location.hash="#/");
  if(p[1]==="add")return scan();
+ if(p[1]==="settings")return settings();
  shelf();
 }
 function shelf(){
@@ -184,24 +193,117 @@ function edit(b,isNew){
  const g=id=>$("#f_"+id);
  g("title").onblur=()=>{const s=split(g("title").value);if(!g("series").value)g("series").value=s.base;if(!g("vol").value&&s.vol!=null)g("vol").value=s.vol};
  $("#fb").onclick=()=>$("#fl").click();
- $("#fl").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const s=Math.min(1,500/im.width),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);b.cover=c.toDataURL("image/jpeg",.8);$("#cvw").innerHTML=cover(b)};im.src=URL.createObjectURL(f)};
+ $("#fl").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const s=Math.min(1,500/im.width),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);b.cover=c.toDataURL("image/jpeg",.8);b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)};im.src=URL.createObjectURL(f)};
  $("#cn").onclick=()=>{if(isNew)draft=null;history.length>1?history.back():location.hash="#/"};
- if($("#del"))$("#del").onclick=()=>{if(confirm("確定要移出收藏？")){books=books.filter(x=>x.id!==b.id);save();location.hash="#/"}};
+ if($("#del"))$("#del").onclick=()=>{if(confirm("確定要移出收藏？")){books=books.filter(x=>x.id!==b.id);tombs=tombs.filter(t=>t.id!==b.id);tombs.push({id:b.id,deleted:true,updatedAt:Date.now()});save();location.hash="#/"}};
  $("#ok").onclick=()=>{
   const title=g("title").value.trim();if(!title){alert("請輸入書名");return}
   const s=split(title);
   Object.assign(b,{isbn:g("isbn").value.trim(),title,series:g("series").value.trim()||s.base,vol:g("vol").value===""?s.vol:+g("vol").value,author:g("author").value.trim(),price:g("price").value.trim(),note:g("note").value});
   // 自動歸入既有系列：系列名稱相同（不分大小寫）即屬同系列，沿用既有作者
   const mate=books.find(x=>x.id!==b.id&&skey(x)===skey(b));if(mate&&!b.author)b.author=mate.author;
+  b.updatedAt=Date.now();if(b.cover&&b.coverAt==null){b.coverAt=Date.now();b._up=true}
   delete b._miss;delete b._src;if(isNew){books.push(b);draft=null}save();
   location.hash=mate||books.some(x=>x.id!==b.id&&skey(x)===skey(b))?"#/series/"+encodeURIComponent(skey(b)):"#/";
  };
 }
+// ===== 跨裝置同步（Cloudflare Worker + KV）=====
+let syncing=false,again=false,syncTimer=null;
+const isData=s=>typeof s==="string"&&s.startsWith("data:");
+const pub=b=>{const o={...b};delete o._up;if(isData(o.cover))delete o.cover;return o};
+const setIcon=t=>{const el=$("#cfg");if(el)el.textContent=t};
+function schedSync(){if(!cfg.url||!cfg.token)return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>sync(),1500)}
+async function api(path,opt={}){
+ const r=await fetch(cfg.url.replace(/\/+$/,"")+path,{...opt,headers:{authorization:"Bearer "+cfg.token,"content-type":"application/json"}});
+ if(r.status===401)throw new Error("同步密碼不正確");
+ if(r.status===501)throw new Error("Worker 尚未設定 KV 或 SYNC_TOKEN");
+ if(!r.ok&&r.status!==404)throw new Error("伺服器錯誤（"+r.status+"）");
+ return r;
+}
+async function sync(){
+ if(!cfg.url||!cfg.token)return;
+ if(syncing){again=true;return}
+ syncing=true;setIcon("⟳");const r0=rev;
+ try{
+  const r=await api("/sync",{method:"POST",body:JSON.stringify({books:[...books.map(pub),...tombs]})});
+  const merged=(await r.json()).books||[];
+  const loc=new Map(books.map(b=>[b.id,b])),hc=new Map(),nb=[],nt=[];
+  for(const m of merged){
+   if(m.deleted){nt.push({id:m.id,deleted:true,updatedAt:m.updatedAt});continue}
+   const l=loc.get(m.id);hc.set(m.id,!!m.hasCover);
+   const rec={...m};delete rec.hasCover;
+   if(!rec.cover||isData(rec.cover))rec.cover=(l&&l.cover)||"";
+   rec._up=!!(l&&l._up&&l.coverAt===m.coverAt);
+   nb.push(rec);
+  }
+  // 1) 上傳尚未同步的封面
+  for(const b of nb)if(b._up&&isData(b.cover)){
+   const u=await api("/cover/"+b.id,{method:"PUT",body:JSON.stringify({cover:b.cover})});
+   if(u.ok){b._up=false;hc.set(b.id,true)}
+  }
+  // 2) 下載本機缺少或版本較舊的封面（一次 3 張）
+  const need=nb.filter(b=>{const l=loc.get(b.id);return hc.get(b.id)&&!b._up&&!(l&&isData(l.cover)&&l.coverAt===b.coverAt)});
+  for(let i=0;i<need.length;i+=3)await Promise.all(need.slice(i,i+3).map(async b=>{
+   const c=await api("/cover/"+b.id);if(c.ok){const j=await c.json();if(j.cover)b.cover=j.cover}
+  }));
+  if(rev!==r0){again=true;return} // 同步期間使用者又改了資料：丟棄這次結果，重跑一次
+  books=nb;tombs=nt;persist();
+  cfg.last=Date.now();cfg.err="";saveCfg();
+  const h=location.hash;if(h===""||h==="#/"||h.startsWith("#/series"))route();
+ }catch(e){cfg.err=String(e.message||e);saveCfg()}
+ finally{syncing=false;setIcon(cfg.err?"⚠":"⚙");if(again){again=false;setTimeout(sync,300)}}
+}
+function statusText(){
+ if(!cfg.url||!cfg.token)return "尚未啟用同步。";
+ return cfg.err?"上次同步失敗："+cfg.err:cfg.last?"上次同步：連線正常，"+new Date(cfg.last).toLocaleString("zh-TW"):"尚未同步。";
+}
+function settings(){
+ $("#ttl").textContent="同步與備份";
+ const base=cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):"");
+ app.innerHTML=`<div class="pane glass"><h2>跨裝置同步</h2><p class="sub">在每台裝置填入相同的 Worker 網址與同步密碼，書架會自動合併。</p>
+ <label>Worker 網址</label><input id="s_url" value="${esc(base)}" placeholder="https://isbn-lookup.你的帳號.workers.dev" autocapitalize="off" autocorrect="off">
+ <label>同步密碼（SYNC_TOKEN）</label><input id="s_tok" type="password" value="${esc(cfg.token||"")}" autocomplete="off">
+ <div class="acts"><button class="pri" id="s_go">儲存並同步</button><button id="s_off">停用同步</button></div>
+ <p class="msg" id="s_msg">${esc(statusText())}</p></div>
+ <div class="pane glass" style="margin-top:16px"><h2>備份</h2><p class="sub">把藏書（含封面）存成檔案，或從備份檔還原。還原時只會加入較新或不存在的書。</p>
+ <div class="acts"><button id="x_out">匯出備份</button><button id="x_in">匯入還原</button></div><input type="file" id="x_f" accept="application/json,.json" hidden></div>`;
+ $("#s_go").onclick=async()=>{
+  const url=$("#s_url").value.trim().replace(/\?.*$/,"").replace(/\/+$/,""),tok=$("#s_tok").value.trim();
+  if(!/^https:\/\//.test(url)||!tok){$("#s_msg").textContent="請填入 https 開頭的 Worker 網址與同步密碼";return}
+  cfg={url,token:tok};saveCfg();$("#s_msg").textContent="同步中…";
+  books.forEach(b=>{if(isData(b.cover)&&b.coverAt!=null)b._up=true}); // 首次連線：本機封面全部補傳一次
+  await sync();$("#s_msg")&&($("#s_msg").textContent=statusText());
+ };
+ $("#s_off").onclick=()=>{cfg={};saveCfg();$("#s_url").value="";$("#s_tok").value="";$("#s_msg").textContent="已停用同步（本機資料保留）。"};
+ $("#x_out").onclick=()=>{
+  const blob=new Blob([JSON.stringify({v:1,books,tombs})],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bookshelf-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();
+ };
+ $("#x_in").onclick=()=>$("#x_f").click();
+ $("#x_f").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{
+   const d=JSON.parse(await f.text());if(!Array.isArray(d.books))throw 0;
+   const ids=new Map(books.map(b=>[b.id,b]));let n=0;
+   for(const b of d.books){if(!b||!b.id)continue;const o=ids.get(b.id);
+    if(!o||(b.updatedAt||b.date||0)>(o.updatedAt||0)){
+     if(o)books=books.filter(x=>x.id!==b.id);
+     tombs=tombs.filter(t=>t.id!==b.id);
+     b.updatedAt??=b.date||Date.now();if(isData(b.cover)){b.coverAt??=b.updatedAt;b._up=true}
+     books.push(b);n++}}
+   save();alert("已還原 "+n+" 本書");
+  }catch(err){alert("這不是有效的備份檔")}
+  e.target.value="";
+ };
+}
+$("#cfg").onclick=()=>location.hash="#/settings";
+addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")sync()});
+addEventListener("online",()=>sync());
 document.addEventListener("click",e=>{const c=e.target.closest("[data-go]");if(c)location.hash=c.dataset.go});
 $("#fab").onclick=()=>location.hash="#/add";
 $("#back").onclick=()=>{if(draft&&location.hash.startsWith("#/edit"))draft=null;location.hash="#/"};
 $("#theme").onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).colorScheme.includes("dark")||r.dataset.theme==="dark";r.dataset.theme=d?"light":"dark"};
-addEventListener("hashchange",route);route();
+addEventListener("hashchange",route);route();sync();
 </script>
 </body>
 </html>
