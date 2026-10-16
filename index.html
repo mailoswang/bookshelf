@@ -16,6 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
+ --gap:60px;
  --ink:#162033;--sub:#62718a;--bg1:#e9eff8;--bg2:#c3d6f0;--bg3:#d7e4f2;--bg4:#cfd8f3;
  --glass:linear-gradient(150deg,rgba(255,255,255,.55),rgba(255,255,255,.24));
  --solid:rgba(255,255,255,.5);--line:rgba(30,55,100,.13);
@@ -40,7 +41,7 @@
 html{background:var(--bg1);min-height:100%}
 html,body{margin:0;min-height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;color:var(--ink);background:transparent;line-height:1.5;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:0;z-index:-1;pointer-events:none;
+body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(--gap));z-index:-1;pointer-events:none;
  background:radial-gradient(120% 40% at 50% 0%,color-mix(in srgb,var(--bg2) 55%,transparent),transparent 75%),var(--bg1)}
 .ic{display:block;flex:none}
 
@@ -55,10 +56,10 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:0;z-index:-1;
 :root[data-theme="dark"] .pane.glass{--glass:linear-gradient(150deg,rgba(255,255,255,.17),rgba(255,255,255,.07))}
 
 /* 底部懸浮列 */
-.edge{position:fixed;left:0;right:0;bottom:0;height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
+.edge{position:fixed;left:0;right:0;bottom:calc(-1*var(--gap));height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
  -webkit-mask-image:linear-gradient(to top,#000 20%,transparent);mask-image:linear-gradient(to top,#000 20%,transparent)}
-.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
+.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px - var(--gap) + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
 .dock:empty{display:none}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;padding:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),background .2s}
 .ib:hover{background:var(--solid)}
@@ -78,8 +79,8 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:0;z-index:-1;
 @keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
 
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-body{position:fixed;inset:0;width:100%}
-main{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
+body{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));width:100%}
+main{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
  padding:calc(env(safe-area-inset-top,0px) + 22px) max(14px,calc((100% - 1080px)/2)) calc(124px + env(safe-area-inset-bottom,0px))}
 main>*{animation:rise .35s ease both}
 main>*:nth-child(2){animation-delay:.04s}main>*:nth-child(3){animation-delay:.08s}
@@ -207,7 +208,7 @@ h3{margin:0;font-size:1.05rem;font-weight:700}
 .spin{display:block;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--acc) 25%,transparent);border-top-color:var(--acc);animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 82px + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:999px;font-size:.9rem;font-weight:500;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 82px - var(--gap) + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:999px;font-size:.9rem;font-weight:500;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
 </style>
 </head>
 <body>
