@@ -37,9 +37,10 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
+html{background:var(--bg1)}
 html,body{margin:0;min-height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;color:var(--ink);background:var(--bg1);line-height:1.5;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+body::before{content:"";position:fixed;left:0;right:0;top:-120px;bottom:-160px;z-index:-1;pointer-events:none;
  background:radial-gradient(46vmax 46vmax at 8% 4%,var(--bg2),transparent 70%),radial-gradient(50vmax 50vmax at 98% 28%,var(--bg3),transparent 70%),radial-gradient(40vmax 40vmax at 25% 102%,var(--bg2),transparent 70%),radial-gradient(34vmax 34vmax at 78% 84%,var(--bg4),transparent 70%)}
 .ic{display:block;flex:none}
 
@@ -54,10 +55,9 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
 :root[data-theme="dark"] .pane.glass{--glass:linear-gradient(150deg,rgba(255,255,255,.17),rgba(255,255,255,.07))}
 
 /* 底部懸浮列 */
-.edge{position:fixed;left:0;right:0;bottom:0;height:calc(124px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
+.edge{position:fixed;left:0;right:0;bottom:-40px;height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
- -webkit-mask-image:linear-gradient(to top,#000 22%,transparent);mask-image:linear-gradient(to top,#000 22%,transparent);
- background:linear-gradient(to top,color-mix(in srgb,var(--bg1) 72%,transparent),transparent)}
+ -webkit-mask-image:linear-gradient(to top,#000 20%,transparent);mask-image:linear-gradient(to top,#000 20%,transparent)}
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px) + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
 .dock:empty{display:none}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;padding:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),background .2s}
@@ -161,7 +161,7 @@ h3{margin:0;font-size:1.05rem;font-weight:700}
 .sec.compact{margin-top:16px;padding:12px 14px 4px;border-radius:24px;background:var(--solid);border:1px solid var(--line)}
 .sec.compact .sech{cursor:pointer;margin-bottom:6px}
 .chev{display:grid;color:var(--sub);transition:transform .2s}.chev.up{transform:rotate(180deg)}
-.strip{display:flex;overflow-x:auto;padding:8px 6px 16px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
+.strip{cursor:pointer;display:flex;overflow-x:auto;padding:8px 6px 16px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}
 .mini{position:relative;flex:none;width:60px;margin-left:-24px;cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
 .mini:first-child{margin-left:0}.mini:hover{transform:translateY(-5px)}
 .mini .cover{border-radius:7px;box-shadow:5px 0 12px rgba(10,20,45,.3)}
@@ -379,16 +379,15 @@ function series(k){
  const many=cats.length>1;
  setDock([backBtn(),{id:"rn",icon:"pencil",tip:"重新命名系列",fn:()=>renameSeries(k)},scanBtn()]);
  const full=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${cover(b)}</div><div class="t">${b.vol!=null?"第 "+b.vol+" 集":esc(b.title)}</div></div>`;
- const sec=(c,i)=>{
+ const sec=(c)=>{
   const l=g.l.filter(b=>(b.cat||"")===c),miss=gaps(l);
   const meta=`${l.length} 本${miss.length?` · 缺第 ${miss.join("、")} 集`:""}`;
   const rn=c?`<button class="ib sm" data-rncat="${esc(c)}" data-sk="${esc(k)}" aria-label="重新命名分類">${ic("pencil",16)}</button>`:"";
   if(!many)return`<section class="sec">${miss.length?`<p class="miss">缺第 ${miss.join("、")} 集</p>`:""}<div class="grid">${l.map(full).join("")}</div></section>`;
-  if(i===0)return`<section class="sec"><div class="sech"><h3>${esc(c||"本篇")}</h3><span class="cnt">${meta}</span>${rn}</div><div class="grid">${l.map(full).join("")}</div></section>`;
   const key=k+"|"+c,open=openCats.has(key);
   return`<section class="sec compact"><div class="sech" data-tog="${esc(key)}"><h3>${esc(c||"本篇")}</h3><span class="cnt">${meta}</span>${rn}<span class="chev${open?" up":""}">${ic("chev",18)}</span></div>`+
    (open?`<div class="grid">${l.map(full).join("")}</div>`
-        :`<div class="strip">${l.map((b,j)=>`<div class="mini" data-go="#/book/${b.id}" style="z-index:${l.length-j}" title="${esc(b.vol!=null?"第 "+b.vol+" 集":b.title)}">${cover(b)}</div>`).join("")}</div>`)+`</section>`;
+        :`<div class="strip" data-tog="${esc(key)}">${l.map((b,j)=>`<div class="mini" style="z-index:${l.length-j}" title="${esc(b.vol!=null?"第 "+b.vol+" 集":b.title)}">${cover(b)}</div>`).join("")}</div>`)+`</section>`;
  };
  app.innerHTML=`<div class="shead"><div class="cv">${cover(f)}</div><div class="info"><h2>${esc(f.series||f.title)}</h2><p class="sub">${esc(f.author||"作者未填")}</p>
   <div class="pills"><span class="pill">${g.l.length} 本</span>${many?`<span class="pill">${cats.length} 個分類</span>`:""}</div></div></div>`+cats.map(sec).join("");
