@@ -1,0 +1,17 @@
+{
+  "name": "我的書櫃",
+  "short_name": "書櫃",
+  "description": "掃描 ISBN 收藏漫畫與小說的個人書櫃",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a111f",
+  "theme_color": "#1e3a68",
+  "lang": "zh-Hant",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
