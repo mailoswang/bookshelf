@@ -10,6 +10,16 @@
 <meta name="theme-color" content="#e9eff8">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1320x2868.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1260x2736.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png">
 <title>我的書櫃</title>
 <script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t!=="light"&&t!=="dark")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,6 +72,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .edge2{position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none;
  background:linear-gradient(to top,rgba(0,0,0,.4),rgba(0,0,0,0));
  background:linear-gradient(to top,color-mix(in srgb,var(--bg1) 80%,transparent) 0%,color-mix(in srgb,var(--bg1) 38%,transparent) 50%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
+.short .edge2{background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
 .dock:empty{display:none}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;padding:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),background .2s}
@@ -770,20 +781,21 @@ function settings(){
  addEventListener("scroll",reset,{passive:true});
  if(window.visualViewport)visualViewport.addEventListener("scroll",()=>{if(visualViewport.offsetTop>0&&!/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||""))scrollTo(0,0)});
 })();
-// iPhone 主畫面模式偶爾開啟時可視高度比螢幕少一截（底部留白）：偵測到就重設 viewport 讓系統重新計算
+// 主畫面模式偶爾可視高度會比螢幕矮一截（系統把狀態列高度扣掉）。偵測到時：先請系統重算，仍不行就把底部淡出收成實色，與下方留白接起來
 const VP="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
-let vpTries=0;
-function vpFix(){
- const short=()=>(screen.height-innerHeight>20)&&innerHeight<innerWidth*3&&matchMedia("(orientation: portrait)").matches;
- if(!short()||vpTries>=4)return;vpTries++;
+let vpTry=0;
+const isShort=()=>(navigator.standalone===true||matchMedia("(display-mode: standalone)").matches)&&screen.height-innerHeight>20&&matchMedia("(orientation: portrait)").matches;
+function vpCheck(){
+ document.documentElement.classList.toggle("short",isShort());
+ if(!isShort()||vpTry>=2)return;vpTry++;
  const m=document.querySelector('meta[name="viewport"]');if(!m)return;
- m.content="width=device-width, initial-scale=1";
- setTimeout(()=>{m.content=VP;scrollTo(0,0);setTimeout(vpFix,300)},60);
+ m.content=VP+", height="+screen.height;
+ setTimeout(()=>{if(isShort())m.content=VP;document.documentElement.classList.toggle("short",isShort())},300);
 }
-addEventListener("pageshow",()=>{vpTries=0;vpFix()});
-addEventListener("resize",()=>{vpTries=0;setTimeout(vpFix,150)});
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTries=0;setTimeout(vpFix,150)}});
-setTimeout(vpFix,200);
+addEventListener("resize",()=>setTimeout(vpCheck,100));
+addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
+setTimeout(vpCheck,100);
 function diag(){
  const p=document.createElement("div");p.style.cssText="position:fixed;left:0;bottom:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden";document.body.appendChild(p);
  const sb=p.offsetHeight;p.remove();
