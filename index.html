@@ -53,7 +53,7 @@ video{width:100%;border-radius:16px;background:#000;max-height:55vh;object-fit:c
 <script>
 // ===== 設定：書籍資料查詢代理（需自行架設後端，因瀏覽器跨網域限制無法直接爬取紀伊國屋／誠品）=====
 // 代理需回傳 JSON: {title, author, price, cover(圖片網址或 data URI)}
-const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code="; // 例："https://your-server.example/api/isbn?code="
+const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code=; // 例："https://your-server.example/api/isbn?code="
 const KEY="bookshelf.v1";
 let books=[];try{books=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(books))}catch(e){}};
