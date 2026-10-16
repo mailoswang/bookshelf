@@ -58,7 +58,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;height:100vh;height:
 .edge{position:fixed;left:0;right:0;bottom:-40px;height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
  -webkit-mask-image:linear-gradient(to top,#000 20%,transparent);mask-image:linear-gradient(to top,#000 20%,transparent)}
-.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px) + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
+.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(8px + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
 .dock:empty{display:none}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;padding:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),background .2s}
 .ib:hover{background:var(--solid)}
@@ -120,7 +120,7 @@ h3{margin:0;font-size:1.05rem;font-weight:700}
 /* shelf */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .stat{border-radius:24px;padding:14px 16px}
-.stat .n{font-size:1.65rem;font-weight:700;line-height:1.1;letter-spacing:-.01em}
+.stat .n{white-space:nowrap;font-size:1.65rem;font-weight:700;line-height:1.1;letter-spacing:-.01em}
 .stat .n small{font-size:.8rem;font-weight:500;color:var(--sub);margin-right:3px}
 .stat .l{font-size:.78rem;color:var(--sub);margin-top:3px}
 .tools{display:flex;gap:10px;margin-bottom:16px;align-items:center}
@@ -206,7 +206,7 @@ h3{margin:0;font-size:1.05rem;font-weight:700}
 .spin{display:block;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--acc) 25%,transparent);border-top-color:var(--acc);animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 
-.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px) + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:999px;font-size:.9rem;font-weight:500;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
+.toast{position:fixed;left:50%;bottom:calc(84px + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:999px;font-size:.9rem;font-weight:500;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
 </style>
 </head>
 <body>
@@ -359,7 +359,7 @@ function shelf(){
  app.innerHTML=`<div class="stats">
   <div class="stat glass"><div class="n">${groups().length}</div><div class="l">系列</div></div>
   <div class="stat glass"><div class="n">${books.length}</div><div class="l">藏書（本）</div></div>
-  ${total?`<div class="stat glass"><div class="n"><small>NT$</small>${total.toLocaleString()}</div><div class="l">總定價</div></div>`:""}
+  ${total?`<div class="stat glass"><div class="n">${total>=10000?(total/10000).toFixed(total>=100000?0:1)+"<small style=\"margin:0 0 0 2px\">萬</small>":total.toLocaleString()}</div><div class="l">總定價（NT$）</div></div>`:""}
  </div>
  ${pend?`<div style="margin-bottom:12px"><button class="chip warn" id="pend">${ic("refresh",15)}${pend} 本待補資料，點此重新查詢</button></div>`:""}
  <div class="tools"><label class="search glass" style="margin:0">${ic("search",18)}<input id="q" type="search" placeholder="搜尋書名、作者、ISBN" value="${esc(query)}" enterkeyhint="search"></label>
