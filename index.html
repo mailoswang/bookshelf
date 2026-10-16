@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -40,7 +40,7 @@
 html{background:var(--bg1);min-height:100%}
 html,body{margin:0;min-height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;color:var(--ink);background:transparent;line-height:1.5;-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;left:0;right:0;top:0;height:100vh;height:100lvh;z-index:-1;pointer-events:none;
+body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:0;z-index:-1;pointer-events:none;
  background:radial-gradient(120% 40% at 50% 0%,color-mix(in srgb,var(--bg2) 55%,transparent),transparent 75%),var(--bg1)}
 .ic{display:block;flex:none}
 
@@ -55,7 +55,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;height:100vh;height:
 :root[data-theme="dark"] .pane.glass{--glass:linear-gradient(150deg,rgba(255,255,255,.17),rgba(255,255,255,.07))}
 
 /* 底部懸浮列 */
-.edge{position:fixed;left:0;right:0;bottom:-40px;height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
+.edge{position:fixed;left:0;right:0;bottom:0;height:calc(164px + env(safe-area-inset-bottom,0px));z-index:20;pointer-events:none;
  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
  -webkit-mask-image:linear-gradient(to top,#000 20%,transparent);mask-image:linear-gradient(to top,#000 20%,transparent)}
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:7px;border-radius:999px;max-width:calc(100% - 20px)}
@@ -261,12 +261,14 @@ try{sortMode=localStorage.getItem(SKEY)||"recent";quick=localStorage.getItem(QKE
 const SORTS={recent:"最近加入",title:"書名",author:"作者"};
 
 function split(t){t=(t||"").trim();const m=t.match(/^(.*?)[\s　]*[（(]?\s*(?:第|vol\.?|VOL\.?|Vol\.?)?\s*(\d+)\s*(?:集|卷|冊|巻|話)?\s*[）)]?\s*$/);return m&&m[1].trim()?{base:m[1].trim(),vol:+m[2]}:{base:t,vol:null}}
+// 移除書名裡的「（電子書）」「[電子書]」等標註，避免影響系列與集數判斷
+const clean=s=>String(s||"").replace(/[\s　]*[（(\[【]\s*電子書\s*[）)\]】]/g,"").replace(/\s{2,}/g," ").trim();
 const skeyS=s=>(s||"").trim().toLowerCase();
 const skey=b=>skeyS(b.series||b.title);
 const catsOf=name=>[...new Set(books.filter(x=>skey(x)===skeyS(name)).map(x=>x.cat).filter(Boolean))];
 // 由書名推測系列／集數／分類：已有系列名稱（取最長的前綴）優先，其次才從書名尾端的數字切出
 function guessFromTitle(title){
- const t=(title||"").trim(),nt=norm(t);
+ const t=clean(title),nt=norm(t);
  const names=[...new Set(books.map(b=>(b.series||"").trim()).filter(Boolean))];
  let best=null;
  for(const n of names){const nn=norm(n);if(nn.length>=2&&nt.startsWith(nn)&&(!best||nn.length>norm(best).length))best=n}
@@ -281,6 +283,10 @@ function groups(){const g={};books.forEach(b=>{(g[skey(b)||b.id]??=[]).push(b)})
  return Object.entries(g).map(([k,l])=>{l.sort((a,b)=>(a.vol??1e9)-(b.vol??1e9)||a.date-b.date);return{k,l,first:l[0],last:Math.max(...l.map(x=>x.date||0))}})}
 function gaps(l){const v=[...new Set(l.map(b=>b.vol).filter(n=>Number.isInteger(n)&&n>0))].sort((a,b)=>a-b);
  if(v.length<2)return[];const out=[];for(let i=v[0];i<v[v.length-1];i++)if(!v.includes(i))out.push(i);return out.length>12?[...out.slice(0,12),"…"]:out}
+(function(){let ch=false;
+ for(const b of books){const t=clean(b.title),s=clean(b.series);if(t===b.title&&s===(b.series||""))continue;
+  const sp=split(t);b.title=t;b.series=s?split(s).base:sp.base;if(b.vol==null)b.vol=sp.vol;b.updatedAt=Date.now();ch=true}
+ if(ch)persist()})();
 function isbnOK(s){s=s.replace(/[-\s]/g,"");if(!/^97[89]\d{10}$/.test(s))return false;let n=0;for(let i=0;i<12;i++)n+=+s[i]*(i%2?3:1);return (10-n%10)%10==+s[12]}
 const cover=b=>`<div class="cover">${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:`<div class="ph">${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}</div>`}</div>`;
 function toast(m){const t=document.createElement("div");t.className="toast glass";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1900)}
@@ -477,7 +483,7 @@ function pumpFill(){
 async function fillOne(id){
  let b=books.find(x=>x.id===id);if(!b||!b.pending)return;
  if(offline()){renderQ();return}
- const r=await lookup(b.isbn,{quiet:true});
+ const r=await lookup(b.isbn,{quiet:true});if(r&&r.title)r.title=clean(r.title);
  b=books.find(x=>x.id===id);if(!b)return;
  if(!r){failed.add(id);renderQ();return}
  const gs=guessFromTitle(r.title||"");
@@ -555,7 +561,7 @@ async function found(isbn){
   if(v!=="dup"){scan();return}
  }
  $("#sm")&&($("#sm").textContent="辨識成功："+isbn+"，查詢書籍資料中…");
- const r=await lookup(isbn);draft=blank();draft.isbn=isbn;
+ const r=await lookup(isbn);if(r&&r.title)r.title=clean(r.title);draft=blank();draft.isbn=isbn;
  if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",cover:r.cover||"",_src:r._src});
   const gs=guessFromTitle(draft.title);draft.series=gs.series;draft.vol=gs.vol;draft.cat=gs.cat;
   if(!draft.author){const m=books.find(x=>skey(x)===skeyS(gs.series)&&x.author);if(m)draft.author=m.author}}
@@ -614,7 +620,7 @@ function edit(b,isNew){
   if(offline()){toast("目前離線，無法查詢");return}
   const btn=$("#rq");btn.classList.add("busy");const r=await lookup(isbn,{quiet:true});btn.classList.remove("busy");
   if(!r){toast("查無資料");return}
-  if(!g("title").value&&r.title){g("title").value=r.title;applyGuess()}
+  if(!g("title").value&&r.title){g("title").value=clean(r.title);applyGuess()}
   if(!g("author").value&&r.author)g("author").value=r.author;
   if(!g("price").value&&r.price)g("price").value=r.price;
   if(r.cover&&(!b.cover||b.pending)){b.cover=r.cover;b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)}
@@ -622,7 +628,7 @@ function edit(b,isNew){
  };
  const del=async()=>{if(await dlg({title:"移出收藏？",msg:"「"+(b.title||"這本書")+"」會從書架移除，其他裝置同步後也會一併移除。",ok:"移出",danger:true})){books=books.filter(x=>x.id!==b.id);tombs=tombs.filter(t=>t.id!==b.id);tombs.push({id:b.id,deleted:true,updatedAt:Date.now()});sess=sess.filter(x=>x!==b.id);save();go("#/",true)}};
  const commit=async next=>{
-  const title=g("title").value.trim();if(!title){await dlg({title:"請輸入書名",msg:"書名不能留白。",cancel:false,ok:"好"});return}
+  const title=clean(g("title").value);if(!title){await dlg({title:"請輸入書名",msg:"書名不能留白。",cancel:false,ok:"好"});return}
   const gs=guessFromTitle(title);
   Object.assign(b,{isbn:g("isbn").value.trim(),title,series:g("series").value.trim()||gs.series||title,vol:g("vol").value===""?gs.vol:+g("vol").value,cat:curCat,author:g("author").value.trim(),price:g("price").value.trim(),note:g("note").value});
   const mate=books.find(x=>x.id!==b.id&&skey(x)===skey(b));if(mate&&!b.author)b.author=mate.author;
