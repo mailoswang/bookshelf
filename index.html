@@ -53,7 +53,7 @@ video{width:100%;border-radius:16px;background:#000;max-height:55vh;object-fit:c
 <script>
 // ===== 設定：書籍資料查詢代理（需自行架設後端，因瀏覽器跨網域限制無法直接爬取紀伊國屋／誠品）=====
 // 代理需回傳 JSON: {title, author, price, cover(圖片網址或 data URI)}
-const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code=";
+const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code="; // 例："https://your-server.example/api/isbn?code="
 const KEY="bookshelf.v1";
 let books=[];try{books=JSON.parse(localStorage.getItem(KEY)||"[]")}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(books))}catch(e){}};
@@ -98,11 +98,33 @@ function scan(){
  <div class="acts"><button id="skip">略過，直接手動建檔</button></div></div>`;
  $("#mg").onclick=()=>{const v=$("#mi").value.replace(/[-\s]/g,"");isbnOK(v)?found(v):$("#sm").textContent="ISBN 格式或檢查碼不正確"};
  $("#skip").onclick=()=>{draft=blank();location.hash="#/edit/new"};
- if(!("BarcodeDetector" in window)||!navigator.mediaDevices){$("#sm").textContent="此瀏覽器不支援鏡頭條碼辨識（建議 Android Chrome／Edge），請手動輸入 ISBN。";$("#v").hidden=true;return}
- navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(s=>{
-  stream=s;const v=$("#v");v.srcObject=s;v.play();const det=new BarcodeDetector({formats:["ean_13"]});
-  const loop=async()=>{if(!stream)return;try{const r=await det.detect(v);for(const c of r)if(isbnOK(c.rawValue)){stopScan();return found(c.rawValue)}}catch(e){}timer=setTimeout(loop,250)};loop();
- }).catch(()=>{$("#sm").textContent="無法開啟鏡頭（請允許權限），可改用手動輸入。";$("#v").hidden=true});
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#sm").textContent="此瀏覽器或連線方式無法使用鏡頭（需 HTTPS），請手動輸入 ISBN。";$("#v").hidden=true;return}
+ navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false}).then(async s=>{
+  stream=s;const v=$("#v");v.setAttribute("playsinline","");v.muted=true;v.srcObject=s;try{await v.play()}catch(e){}
+  const detect=await makeDetector();
+  if(!detect){$("#sm").textContent="條碼辨識元件載入失敗（可能離線），請手動輸入 ISBN。";return}
+  const loop=async()=>{if(!stream)return;try{const t=await detect(v);if(t&&isbnOK(t)){stopScan();return found(t)}}catch(e){}timer=setTimeout(loop,200)};loop();
+ }).catch(()=>{$("#sm").textContent="無法開啟鏡頭：請允許網站使用相機（iPhone：設定 → Safari → 相機），或改用手動輸入。";$("#v").hidden=true});
+}
+// 條碼辨識：優先用瀏覽器內建 BarcodeDetector（Android Chrome），Safari 沒有，改用 ZXing 後備
+const loadScript=u=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+async function makeDetector(){
+ if("BarcodeDetector" in window){
+  try{const d=new BarcodeDetector({formats:["ean_13"]});return async v=>{const r=await d.detect(v);return r[0]&&r[0].rawValue}}catch(e){}
+ }
+ try{
+  if(!window.ZXing)await loadScript("https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js");
+  const Z=window.ZXing,h=new Map();
+  h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13]);h.set(Z.DecodeHintType.TRY_HARDER,true);
+  const rd=new Z.MultiFormatReader();rd.setHints(h);
+  const cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
+  return async v=>{
+   if(!v.videoWidth)return null;
+   const w=Math.min(960,v.videoWidth),k=w/v.videoWidth;cv.width=w;cv.height=Math.round(v.videoHeight*k);
+   cx.drawImage(v,0,0,cv.width,cv.height);
+   try{return rd.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))).getText()}catch(e){return null}
+  };
+ }catch(e){return null}
 }
 const blank=()=>({id:"b"+Date.now().toString(36),isbn:"",title:"",series:"",vol:null,author:"",price:"",cover:"",note:"",date:Date.now()});
 const tmo=(u,o={})=>{const c=new AbortController();setTimeout(()=>c.abort(),6000);return fetch(u,{...o,signal:c.signal})};
