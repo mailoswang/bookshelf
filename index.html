@@ -567,7 +567,7 @@ const normDate=s=>{const m=String(s||"").match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2
 const imgOK=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i.naturalWidth>40);i.onerror=()=>r(false);i.src=u});
 const lookupBase=()=>PROXY||(cfg.url?cfg.url.replace(/\/+$/,"")+"/?code=":"");
 const SRC=[
- ["自訂代理",async i=>{const b=lookupBase();if(!b)return null;const res=await tmo(b+i,{},15000);if(res.status===404)return null;if(!res.ok)throw new Error("HTTP "+res.status);return await res.json()}],
+ ["自訂代理",async i=>{const b=lookupBase();if(!b)return null;const res=await tmo(b+i,{cache:"no-cache"},25000);if(res.status===404)return null;if(!res.ok)throw new Error("HTTP "+res.status);return await res.json()}],
  ["Google Books",async i=>{
   const j=await (await tmo("https://www.googleapis.com/books/v1/volumes?q=isbn:"+i)).json();const it=j.items&&j.items[0];if(!it)return null;
   const v=it.volumeInfo,p=it.saleInfo&&it.saleInfo.listPrice;
