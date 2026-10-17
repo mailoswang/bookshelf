@@ -433,14 +433,12 @@ function renderRows(){
  const holes=gs.filter(x=>gaps(x.l).length);
  const au=new Map();gs.forEach(x=>{const a=(x.first.author||"").trim();if(a)(au.get(a)||au.set(a,[]).get(a)).push(x)});
  const authors=[...au.entries()].filter(e=>e[1].length>1).sort((a,b)=>b[1].length-a[1].length).slice(0,3);
- const singles=gs.filter(x=>x.l.length===1);
  $("#rows").innerHTML=
   rail("最近加入",recent.map(bookCard))+
   (top.length>=3?rail("收藏最多的系列",top.map((x,i)=>`<div class="tcard" data-go="${hrefOf(x)}"><span class="num">${i+1}</span><div class="cv">${cover(x.first)}</div></div>`)):"")+
   rail("我的系列",multi.map(x=>card(x)))+
   rail("缺集待補",holes.map(x=>card(x,"缺 "+gaps(x.l).filter(n=>n!=="…").length+(gaps(x.l).includes("…")?"+":"")+" 集")))+
-  authors.map(([a,l])=>rail(a+" 的作品",l.map(x=>card(x)))).join("")+
-  (singles.length>=3?rail("單行本",singles.map(x=>card(x))):"");
+  authors.map(([a,l])=>rail(a+" 的作品",l.map(x=>card(x)))).join("");
 }
 function renderGrid(){
  let g=groups();const q=norm(query);
