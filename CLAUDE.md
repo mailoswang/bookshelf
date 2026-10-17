@@ -14,7 +14,7 @@
 
 ## 慣例
 - 保持單檔、不引入建置工具或框架。
-- 介面是藏藍色調的 Liquid Glass 近似（CSS 變數在 `:root` 與 `:root[data-theme="dark"]`）。
+- 介面是 Netflix 風格：預設深色（#141414）、紅色（#e50914）當重點色、平面面板（CSS 變數在 `:root` 與 `:root[data-theme="dark"]`）。首頁上方是精選系列的大看板（`.hero`，內容的一部分，不是導覽橫幅），下面是橫向捲動的列（`.rail`）；touchmove 攔截會放行 `.rail` 的橫向滑動。
 - 全頁沒有上方橫幅，所有導覽與操作都在底部懸浮列（`setDock()`）。
 - 書名用 `clean()` 去掉「（電子書）」後，再用 `guessFromTitle()` 判斷系列／集數／分類。
 
