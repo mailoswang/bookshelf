@@ -278,12 +278,22 @@ const SORTS={recent:"最近加入",title:"書名",author:"作者"};
 function split(t){t=(t||"").trim();const m=t.match(/^(.*?)[\s　]*[（(]?\s*(?:第|vol\.?|VOL\.?|Vol\.?)?\s*(\d+)\s*(?:集|卷|冊|巻|話)?\s*[）)]?\s*$/);return m&&m[1].trim()?{base:m[1].trim(),vol:+m[2]}:{base:t,vol:null}}
 // 移除書名裡的「（電子書）」「[電子書]」等標註，避免影響系列與集數判斷
 const clean=s=>String(s||"").replace(/[\s　]*[（(\[【]\s*電子書\s*[）)\]】]/g,"").replace(/\s{2,}/g," ").trim();
+// 書名後面的版本標註（首刷限定版、特裝版…）：括號內或結尾單獨一段，認得出來就從書名拆成「版本」
+const EDKW="首刷|初回|限定|特裝|特別|附錄|書腰|書盒|豪華|典藏|珍藏|限量|盒裝|愛藏|紀念|贈品|附贈";
+const RE_ED_B=new RegExp("[\\s　]*[（(\\[【]\\s*([^）)\\]】]*?(?:"+EDKW+")[^）)\\]】]*?)\\s*[）)\\]】]");
+const RE_ED_T=new RegExp("[\\s　]+([^\\s（()）\\[\\]【】]*(?:"+EDKW+")[^\\s（()）\\[\\]【】]*[版刷裝盒])$");
+function splitEdition(t){t=String(t||"").trim();
+ let m=t.match(RE_ED_B)||t.match(RE_ED_T);
+ if(!m)return{title:t,edition:""};
+ const rest=(t.slice(0,m.index)+t.slice(m.index+m[0].length)).replace(/\s{2,}/g," ").trim();
+ return rest?{title:rest,edition:m[1].trim()}:{title:t,edition:""};
+}
 const skeyS=s=>(s||"").trim().toLowerCase();
 const skey=b=>skeyS(b.series||b.title);
 const catsOf=name=>[...new Set(books.filter(x=>skey(x)===skeyS(name)).map(x=>x.cat).filter(Boolean))];
 // 由書名推測系列／集數／分類：已有系列名稱（取最長的前綴）優先，其次才從書名尾端的數字切出
 function guessFromTitle(title){
- const t=clean(title),nt=norm(t);
+ const t=splitEdition(clean(title)).title,nt=norm(t);
  const names=[...new Set(books.map(b=>(b.series||"").trim()).filter(Boolean))];
  let best=null;
  for(const n of names){const nn=norm(n);if(nn.length>=2&&nt.startsWith(nn)&&(!best||nn.length>norm(best).length))best=n}
@@ -299,11 +309,16 @@ function groups(){const g={};books.forEach(b=>{(g[skey(b)||b.id]??=[]).push(b)})
 function gaps(l){const v=[...new Set(l.map(b=>b.vol).filter(n=>Number.isInteger(n)&&n>0))].sort((a,b)=>a-b);
  if(v.length<2)return[];const out=[];for(let i=v[0];i<v[v.length-1];i++)if(!v.includes(i))out.push(i);return out.length>12?[...out.slice(0,12),"…"]:out}
 (function(){let ch=false;
- for(const b of books){const t=clean(b.title),s=clean(b.series);if(t===b.title&&s===(b.series||""))continue;
-  const sp=split(t);b.title=t;b.series=s?split(s).base:sp.base;if(b.vol==null)b.vol=sp.vol;b.updatedAt=Date.now();ch=true}
+ for(const b of books){let t=clean(b.title),s=clean(b.series);
+  const et=splitEdition(t),es=splitEdition(s);
+  const ed=b.edition||et.edition||es.edition;t=et.title;s=es.title;
+  if(t===b.title&&s===(b.series||"")&&(b.edition||"")===ed)continue;
+  const sp=split(t);b.title=t;b.series=s?split(s).base:sp.base;if(b.vol==null)b.vol=sp.vol;if(ed)b.edition=ed;b.updatedAt=Date.now();ch=true}
  if(ch)persist()})();
 function isbnOK(s){s=s.replace(/[-\s]/g,"");if(!/^97[89]\d{10}$/.test(s))return false;let n=0;for(let i=0;i<12;i++)n+=+s[i]*(i%2?3:1);return (10-n%10)%10==+s[12]}
-const cover=b=>`<div class="cover">${b.cover?`<img src="${esc(b.cover)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:`<div class="ph">${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}</div>`}</div>`;
+// 沒有封面但有 ISBN 的書（例如匯入的），改向 Worker 的 /img/<ISBN> 取圖：只存網址，不佔瀏覽器儲存空間
+const autoCover=b=>{const w=(cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):"")).replace(/\/+$/,"");const i=String(b.isbn||"").replace(/\D/g,"");return w&&/^(97[89]\d{10}|\d{10})$/.test(i)?w+"/img/"+i:""};
+const cover=b=>{const src=b.cover||autoCover(b);return`<div class="cover">${src?`<img src="${esc(src)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`:`<div class="ph">${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}</div>`}</div>`};
 function toast(m){const t=document.createElement("div");t.className="toast glass";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1900)}
 const setTitle=t=>{document.title=t==="我的書櫃"?t:t+"．我的書櫃"};
 const sameIsbn=(a,b)=>{const x=String(a||"").replace(/\D/g,""),y=String(b||"").replace(/\D/g,"");return !!x&&x===y};
@@ -498,11 +513,11 @@ function pumpFill(){
 async function fillOne(id){
  let b=books.find(x=>x.id===id);if(!b||!b.pending)return;
  if(offline()){renderQ();return}
- const r=await lookup(b.isbn,{quiet:true});if(r&&r.title)r.title=clean(r.title);
+ const r=await lookup(b.isbn,{quiet:true});let _ed="";if(r&&r.title){const pe=splitEdition(clean(r.title));r.title=pe.title;_ed=pe.edition}
  b=books.find(x=>x.id===id);if(!b)return;
  if(!r){failed.add(id);renderQ();return}
  const gs=guessFromTitle(r.title||"");
- Object.assign(b,{title:r.title||b.title,author:r.author||"",price:r.price||"",series:gs.series||r.title||"",vol:gs.vol,cat:gs.cat,pending:false,updatedAt:Date.now()});
+ Object.assign(b,{title:r.title||b.title,author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed||b.edition||"",series:gs.series||r.title||"",vol:gs.vol,cat:gs.cat,pending:false,updatedAt:Date.now()});
  if(r.cover){b.cover=r.cover;b.coverAt=Date.now();b._up=true}
  if(!b.author){const m=books.find(x=>x.id!==id&&skey(x)===skey(b)&&x.author);if(m)b.author=m.author}
  failed.delete(id);save();renderQ();
@@ -528,8 +543,10 @@ function undoLast(){
 }
 
 // ===== 查詢書籍資料 =====
-const blank=()=>({id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),isbn:"",title:"",series:"",cat:"",vol:null,author:"",price:"",cover:"",note:"",date:Date.now()});
+const blank=()=>({id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),isbn:"",title:"",series:"",cat:"",vol:null,author:"",price:"",publisher:"",pubDate:"",edition:"",cover:"",note:"",date:Date.now()});
 const tmo=(u,o={},ms=6000)=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return fetch(u,{...o,signal:c.signal})};
+// 日期統一成 YYYY/MM/DD（只有年月就補 01）
+const normDate=s=>{const m=String(s||"").match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);return m?m[1]+"/"+m[2].padStart(2,"0")+"/"+(m[3]||"1").padStart(2,"0"):""};
 const imgOK=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i.naturalWidth>40);i.onerror=()=>r(false);i.src=u});
 const lookupBase=()=>PROXY||(cfg.url?cfg.url.replace(/\/+$/,"")+"/?code=":"");
 const SRC=[
@@ -538,7 +555,7 @@ const SRC=[
   const j=await (await tmo("https://www.googleapis.com/books/v1/volumes?q=isbn:"+i)).json();const it=j.items&&j.items[0];if(!it)return null;
   const v=it.volumeInfo,p=it.saleInfo&&it.saleInfo.listPrice;
   const im=v.imageLinks&&(v.imageLinks.thumbnail||v.imageLinks.smallThumbnail);
-  return{title:v.title+(v.subtitle?" "+v.subtitle:""),author:(v.authors||[]).join("、"),price:p?p.currencyCode+" "+p.amount:"",cover:im?im.replace("http:","https:").replace("&edge=curl",""):""}}],
+  return{title:v.title+(v.subtitle?" "+v.subtitle:""),author:(v.authors||[]).join("、"),price:p?p.currencyCode+" "+p.amount:"",publisher:v.publisher||"",pubDate:normDate(v.publishedDate),cover:im?im.replace("http:","https:").replace("&edge=curl",""):""}}],
  ["Open Library",async i=>{
   const j=await (await tmo("https://openlibrary.org/api/books?format=json&jscmd=data&bibkeys=ISBN:"+i)).json();const v=j["ISBN:"+i];
   const c="https://covers.openlibrary.org/b/isbn/"+i+"-L.jpg?default=false";
@@ -555,7 +572,7 @@ const SRC=[
 ];
 async function lookup(isbn,o={}){
  if(offline())return null;
- const out={title:"",author:"",price:"",cover:""},used=[];
+ const out={title:"",author:"",price:"",cover:"",publisher:"",pubDate:""},used=[];
  for(const [name,fn] of SRC){
   if(out.title&&out.cover&&out.author)break;
   if(!o.quiet){const sm=$("#sm");if(sm)sm.textContent="查詢中："+name+"…"}
@@ -576,8 +593,8 @@ async function found(isbn){
   if(v!=="dup"){scan();return}
  }
  $("#sm")&&($("#sm").textContent="辨識成功："+isbn+"，查詢書籍資料中…");
- const r=await lookup(isbn);if(r&&r.title)r.title=clean(r.title);draft=blank();draft.isbn=isbn;
- if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",cover:r.cover||"",_src:r._src});
+ const r=await lookup(isbn);if(r&&r.title)r.title=clean(r.title);draft=blank();let _ed="";if(r&&r.title){const pe=splitEdition(r.title);r.title=pe.title;_ed=pe.edition}draft.isbn=isbn;
+ if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed,cover:r.cover||"",_src:r._src});
   const gs=guessFromTitle(draft.title);draft.series=gs.series;draft.vol=gs.vol;draft.cat=gs.cat;
   if(!draft.author){const m=books.find(x=>skey(x)===skeyS(gs.series)&&x.author);if(m)draft.author=m.author}}
  draft._miss=!r;draft._off=offline();go("#/edit/new");
@@ -600,6 +617,9 @@ function edit(b,isNew){
  <div class="two"><div><label>系列名稱</label><input id="f_series" list="dl_series" value="${esc(b.series)}"><datalist id="dl_series">${names.map(n=>`<option value="${esc(n)}">`).join("")}</datalist></div><div><label>集數</label><input id="f_vol" type="number" inputmode="numeric" value="${b.vol??""}"></div></div>
  <label>系列內分類（輕小說、外傳、改編漫畫…）</label><div class="chips" id="cats"></div>
  <div class="two"><div><label>作者</label><input id="f_author" value="${esc(b.author)}"></div><div><label>建議售價</label><input id="f_price" value="${esc(b.price)}"></div></div>
+ <div class="two"><div><label>出版社</label><input id="f_publisher" value="${esc(b.publisher||"")}"></div><div><label>出版日期</label><input id="f_pubDate" value="${esc(b.pubDate||"")}" placeholder="2024/06/06" inputmode="numeric"></div></div>
+ <label>版本（首刷限定版、特裝版…）</label><input id="f_edition" value="${esc(b.edition||"")}" placeholder="沒有就留空">
+ <div class="chips" id="eds" style="margin-top:8px"></div>
  <label>備註</label><textarea id="f_note" rows="2">${esc(b.note)}</textarea></div></div></div>`;
  const g=id=>$("#f_"+id);
  let curCat=b.cat||"",extra=[];
@@ -619,12 +639,20 @@ function edit(b,isNew){
  const auto=isNew?{series:g("series").value,vol:g("vol").value,cat:curCat}:{series:null,vol:null,cat:null};
  const fillAuthor=()=>{if(g("author").value)return;const sk=skeyS(g("series").value);if(!sk)return;const m=books.find(x=>x.id!==b.id&&skey(x)===sk&&x.author);if(m)g("author").value=m.author};
  const applyGuess=()=>{
+  const pe=splitEdition(clean(g("title").value));
+  if(pe.edition){if(!g("edition").value){g("edition").value=pe.edition;renderEds()}g("title").value=pe.title}
   const gs=guessFromTitle(g("title").value);
   if(!g("series").value||g("series").value===auto.series){g("series").value=gs.series||"";auto.series=g("series").value}
   if(!g("vol").value||g("vol").value===auto.vol){g("vol").value=gs.vol??"";auto.vol=g("vol").value}
   if((curCat===""||curCat===auto.cat)&&gs.cat){curCat=gs.cat;auto.cat=gs.cat}
   renderCats();fillAuthor();
  };
+const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.edition,(c.get(x.edition)||0)+1)});
+  const base=["首刷限定版","首刷書腰版","首刷附錄版","首刷版","特裝版","限定版","豪華版"];
+  return [...new Set([...[...c.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]),...base])].slice(0,10)};
+ const renderEds=()=>{const cur=g("edition").value.trim();$("#eds").innerHTML=edList().map(e=>`<button type="button" class="chip${cur===e?" on":""}" data-ed="${esc(e)}">${esc(e)}</button>`).join("")};
+ $("#eds").onclick=e=>{const c=e.target.closest("[data-ed]");if(!c)return;g("edition").value=g("edition").value.trim()===c.dataset.ed?"":c.dataset.ed;renderEds()};
+ g("edition").oninput=renderEds;renderEds();
  g("title").onblur=applyGuess;
  g("series").oninput=renderCats;g("series").onchange=()=>{renderCats();fillAuthor()};
  $("#fb").onclick=()=>$("#fl").click();
@@ -638,14 +666,16 @@ function edit(b,isNew){
   if(!g("title").value&&r.title){g("title").value=clean(r.title);applyGuess()}
   if(!g("author").value&&r.author)g("author").value=r.author;
   if(!g("price").value&&r.price)g("price").value=r.price;
+  if(!g("publisher").value&&r.publisher)g("publisher").value=r.publisher;
+  if(!g("pubDate").value&&r.pubDate)g("pubDate").value=normDate(r.pubDate);
   if(r.cover&&(!b.cover||b.pending)){b.cover=r.cover;b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)}
   toast("已補上資料，請確認後儲存");
  };
  const del=async()=>{if(await dlg({title:"移出收藏？",msg:"「"+(b.title||"這本書")+"」會從書架移除，其他裝置同步後也會一併移除。",ok:"移出",danger:true})){books=books.filter(x=>x.id!==b.id);tombs=tombs.filter(t=>t.id!==b.id);tombs.push({id:b.id,deleted:true,updatedAt:Date.now()});sess=sess.filter(x=>x!==b.id);save();go("#/",true)}};
  const commit=async next=>{
-  const title=clean(g("title").value);if(!title){await dlg({title:"請輸入書名",msg:"書名不能留白。",cancel:false,ok:"好"});return}
+  const _pe=splitEdition(clean(g("title").value));const title=_pe.title;if(_pe.edition&&!g("edition").value.trim())g("edition").value=_pe.edition;if(!title){await dlg({title:"請輸入書名",msg:"書名不能留白。",cancel:false,ok:"好"});return}
   const gs=guessFromTitle(title);
-  Object.assign(b,{isbn:g("isbn").value.trim(),title,series:g("series").value.trim()||gs.series||title,vol:g("vol").value===""?gs.vol:+g("vol").value,cat:curCat,author:g("author").value.trim(),price:g("price").value.trim(),note:g("note").value});
+  Object.assign(b,{isbn:g("isbn").value.trim(),title,series:g("series").value.trim()||gs.series||title,vol:g("vol").value===""?gs.vol:+g("vol").value,cat:curCat,author:g("author").value.trim(),price:g("price").value.trim(),publisher:g("publisher").value.trim(),pubDate:normDate(g("pubDate").value)||g("pubDate").value.trim(),edition:g("edition").value.trim(),note:g("note").value});
   const mate=books.find(x=>x.id!==b.id&&skey(x)===skey(b));if(mate&&!b.author)b.author=mate.author;
   b.updatedAt=Date.now();if(b.cover&&b.coverAt==null){b.coverAt=Date.now();b._up=true}
   delete b._miss;delete b._src;delete b._off;delete b.pending;failed.delete(b.id);
@@ -753,14 +783,15 @@ function settings(){
   const f=e.target.files[0];if(!f)return;
   try{
    const d=JSON.parse(await f.text());if(!Array.isArray(d.books))throw 0;
-   const ids=new Map(books.map(b=>[b.id,b]));let n=0;
+   const ids=new Map(books.map(b=>[b.id,b]));let n=0,skip=0;
    for(const b of d.books){if(!b||!b.id)continue;const o=ids.get(b.id);
+    if(!o&&b.isbn&&books.some(x=>sameIsbn(x.isbn,b.isbn))){skip++;continue}
     if(!o||(b.updatedAt||b.date||0)>(o.updatedAt||0)){
      if(o)books=books.filter(x=>x.id!==b.id);
      tombs=tombs.filter(t=>t.id!==b.id);
      b.updatedAt??=b.date||Date.now();if(isData(b.cover)){b.coverAt??=b.updatedAt;b._up=true}
      books.push(b);n++}}
-   save();await dlg({title:"已還原",msg:"加入了 "+n+" 本書。",cancel:false,ok:"好"});
+   save();await dlg({title:"已還原",msg:"加入了 "+n+" 本書"+(skip?"，略過 "+skip+" 本（ISBN 已在書架裡）":"")+"。",cancel:false,ok:"好"});
   }catch(err){await dlg({title:"無法還原",msg:"這不是有效的備份檔。",cancel:false,ok:"好"})}
   e.target.value="";
  };
