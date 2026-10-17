@@ -290,9 +290,6 @@ let rev=0;
 let quotaWarned=false;
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(TKEY,JSON.stringify(tombs))}catch(e){if(!quotaWarned){quotaWarned=true;setTimeout(()=>toast("瀏覽器儲存空間已滿，最近的變更可能不會保存"),0)}}};
 const saveCfg=()=>{try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}};
-// 存取金鑰：由同步密碼雜湊而來（不直接送出密碼），Worker 用它擋掉沒有金鑰的查詢
-const sha16=async s=>{try{const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("bookshelf:"+s));return [...new Uint8Array(d)].slice(0,16).map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){return ""}};
-const ensureK=async()=>{if(cfg.token&&!cfg.k){cfg.k=await sha16(cfg.token);if(cfg.k)saveCfg()}};
 const save=()=>{rev++;persist();schedSync()};
 const $=s=>document.querySelector(s), app=$("#app");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -348,7 +345,7 @@ const CFKEY="bookshelf.coverfail",STAMP=Date.now();
 let coverRetry=new Set();
 try{coverRetry=new Set(JSON.parse(localStorage.getItem(CFKEY)||"[]"));localStorage.setItem(CFKEY,"[]")}catch(e){}
 window.__cf=id=>{try{const a=new Set(JSON.parse(localStorage.getItem(CFKEY)||"[]"));a.add(id);localStorage.setItem(CFKEY,JSON.stringify([...a]))}catch(e){}};
-const autoCover=b=>{const w=(cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):"")).replace(/\/+$/,"");const i=String(b.isbn||"").replace(/\D/g,"");return w&&/^(97[89]\d{10}|\d{10})$/.test(i)?w+"/img/"+i+(cfg.k?"?k="+cfg.k:""):""};
+const autoCover=b=>{const w=(cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):"")).replace(/\/+$/,"");const i=String(b.isbn||"").replace(/\D/g,"");return w&&/^(97[89]\d{10}|\d{10})$/.test(i)?w+"/img/"+i:""};
 // 網址型封面（匯入的書）載入成功後存進瀏覽器的 Cache Storage；Worker 偶爾沒回應時，改用本機存的那份
 const cbase=u=>String(u||"").replace(/[?#].*$/,"");
 window.__cs=async img=>{try{if(!/^https?:/.test(img.src)||!window.caches)return;const c=await caches.open("bookshelf-covers"),k=cbase(img.src);if(await c.match(k))return;const r=await fetch(img.src,{cache:"force-cache"});if(r.ok&&/^image\//.test(r.headers.get("content-type")||"")&&(+r.headers.get("content-length")||0)<2e6)await c.put(k,r)}catch(e){}};
@@ -636,7 +633,7 @@ const shrink=src=>new Promise(res=>{
 const imgOK=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i.naturalWidth>40);i.onerror=()=>r(false);i.src=u});
 const lookupBase=()=>PROXY||(cfg.url?cfg.url.replace(/\/+$/,"")+"/?code=":"");
 const SRC=[
- ["自訂代理",async i=>{const b=lookupBase();if(!b)return null;const res=await tmo(b+i+(cfg.k?"&k="+cfg.k:""),{cache:"no-cache"},25000);if(res.status===404)return null;if(!res.ok)throw new Error("HTTP "+res.status);return await res.json()}],
+ ["自訂代理",async i=>{const b=lookupBase();if(!b)return null;const res=await tmo(b+i,{cache:"no-cache"},25000);if(res.status===404)return null;if(!res.ok)throw new Error("HTTP "+res.status);return await res.json()}],
  ["Google Books",async i=>{
   const j=await (await tmo("https://www.googleapis.com/books/v1/volumes?q=isbn:"+i)).json();const it=j.items&&j.items[0];if(!it)return null;
   const v=it.volumeInfo,p=it.saleInfo&&it.saleInfo.listPrice;
@@ -865,7 +862,7 @@ function settings(){
  $("#s_go").onclick=async()=>{
   const url=$("#s_url").value.trim().replace(/\?.*$/,"").replace(/\/+$/,""),tok=$("#s_tok").value.trim();
   if(!/^https:\/\//.test(url)||!tok){$("#s_msg").textContent="請填入 https 開頭的 Worker 網址與同步密碼";return}
-  cfg={url,token:tok};cfg.k=await sha16(tok);saveCfg();$("#s_msg").textContent="同步中…";
+  cfg={url,token:tok};saveCfg();$("#s_msg").textContent="同步中…";
   books.forEach(b=>{if(isData(b.cover)&&b.coverAt!=null)b._up=true});
   await sync();$("#s_msg")&&($("#s_msg").textContent=statusText());
  };
@@ -963,7 +960,7 @@ addEventListener("offline",()=>renderQ());
 addEventListener("hashchange",route);
 // 清除先前版本留下的離線快取與 Service Worker
 if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>{rs.forEach(r=>r.unregister());if(rs.length&&window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))}).catch(()=>{})}
-applyTheme();ensureK().finally(()=>{route();sync();setTimeout(fillPending,1500)});
+applyTheme();route();sync();setTimeout(fillPending,1500);
 </script>
 </body>
 </html>
