@@ -533,7 +533,7 @@ async function fillOne(id){
   if(!b.author&&r.author)b.author=r.author;if(!b.price&&r.price)b.price=r.price;
   if(!b.publisher&&r.publisher)b.publisher=r.publisher;if(!b.pubDate&&r.pubDate)b.pubDate=normDate(r.pubDate);
   if(!b.edition&&pe.edition)b.edition=pe.edition;
-  if(!b.cover&&r.cover){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true}
+  {const kc=keepCover(r.cover);if(!b.cover&&kc){b.cover=kc;b.coverAt=Date.now()}}
   delete b.refill;b.updatedAt=Date.now();save();return;
  }
  const r=await lookup(b.isbn,{quiet:true});let _ed="";if(r&&r.title){const pe=splitEdition(clean(r.title));r.title=pe.title;_ed=pe.edition}
@@ -541,7 +541,7 @@ async function fillOne(id){
  if(!r){failed.add(id);renderQ();return}
  const gs=guessFromTitle(r.title||"");
  Object.assign(b,{title:r.title||b.title,author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed||b.edition||"",series:gs.series||r.title||"",vol:gs.vol,cat:gs.cat,pending:false,updatedAt:Date.now()});
- if(r.cover){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true}
+ {const kc=keepCover(r.cover);if(kc){b.cover=kc;b.coverAt=Date.now()}}
  if(!b.author){const m=books.find(x=>x.id!==id&&skey(x)===skey(b)&&x.author);if(m)b.author=m.author}
  failed.delete(id);save();renderQ();
 }
@@ -571,6 +571,8 @@ const tmo=(u,o={},ms=6000)=>{const c=new AbortController();setTimeout(()=>c.abor
 // 日期統一成 YYYY/MM/DD（只有年月就補 01）
 const normDate=s=>{const m=String(s||"").match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);return m?m[1]+"/"+m[2].padStart(2,"0")+"/"+(m[3]||"1").padStart(2,"0"):""};
 // 把 Worker 抓到的封面縮小再存（最寬 420px、JPEG），避免幾百本書把瀏覽器的 5MB 儲存空間塞滿，造成「封面消失」
+// Worker 回傳的封面是內嵌圖片（data URI）：不存進書裡，改由 ISBN 向 Worker 取圖；其他來源的網址型封面才保留
+const keepCover=c=>c&&!/^data:/.test(c)?c:"";
 const shrink=src=>new Promise(res=>{
  if(!/^data:image\//.test(src||"")||src.length<60000)return res(src);
  const im=new Image();im.onload=()=>{try{const s=Math.min(1,420/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);const o=c.toDataURL("image/jpeg",.78);res(o.length<src.length?o:src)}catch(e){res(src)}};
@@ -624,7 +626,7 @@ async function found(isbn){
  }
  $("#sm")&&($("#sm").textContent="辨識成功："+isbn+"，查詢書籍資料中…");
  const r=await lookup(isbn);if(r&&r.title)r.title=clean(r.title);draft=blank();let _ed="";if(r&&r.title){const pe=splitEdition(r.title);r.title=pe.title;_ed=pe.edition}draft.isbn=isbn;
- if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed,cover:await shrink(r.cover||""),_src:r._src});
+ if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed,cover:keepCover(r.cover),_src:r._src});
   const gs=guessFromTitle(draft.title);draft.series=gs.series;draft.vol=gs.vol;draft.cat=gs.cat;
   if(!draft.author){const m=books.find(x=>skey(x)===skeyS(gs.series)&&x.author);if(m)draft.author=m.author}}
  draft._miss=!r;draft._off=offline();go("#/edit/new");
@@ -686,7 +688,7 @@ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.editi
  g("title").onblur=applyGuess;
  g("series").oninput=renderCats;g("series").onchange=()=>{renderCats();fillAuthor()};
  $("#fb").onclick=()=>$("#fl").click();
- $("#fl").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const s=Math.min(1,500/im.width),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);b.cover=c.toDataURL("image/jpeg",.8);b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)};im.src=URL.createObjectURL(f)};
+ $("#fl").onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const s=Math.min(1,500/im.width),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);b.cover=c.toDataURL("image/jpeg",.8);b.coverAt=Date.now();b._up=true;b.coverManual=true;delete b.cvUrl;$("#cvw").innerHTML=cover(b)};im.src=URL.createObjectURL(f)};
  $("#rq").onclick=async()=>{
   const isbn=g("isbn").value.replace(/[-\s]/g,"");
   if(!isbnOK(isbn)){toast("ISBN 格式或檢查碼不正確");return}
@@ -699,8 +701,8 @@ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.editi
   if(!g("price").value&&r.price)g("price").value=r.price;
   if(!g("publisher").value&&r.publisher)g("publisher").value=r.publisher;
   if(!g("pubDate").value&&r.pubDate)g("pubDate").value=normDate(r.pubDate);
-  if(r.cover&&(!b.cover||b.pending)){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)}
-  if(b.cover)toast("已補上資料，請確認後儲存");
+  {const kc=keepCover(r.cover);if(kc&&(!b.cover||b.pending)){b.cover=kc;b.coverAt=Date.now()}$("#cvw").innerHTML=cover(b)}
+  if(b.cover||r.cover)toast("已補上資料，請確認後儲存");
   else{await dlg({title:"資料已補上，但找不到封面",msg:"各來源的回應：\n"+(lastInfo||"無")+"\n\n可以用「更換封面」自己上傳，或稍後再試一次。",cancel:false,ok:"好"})}
  };
  const del=async()=>{if(await dlg({title:"移出收藏？",msg:"「"+(b.title||"這本書")+"」會從書架移除，其他裝置同步後也會一併移除。",ok:"移出",danger:true})){books=books.filter(x=>x.id!==b.id);tombs=tombs.filter(t=>t.id!==b.id);tombs.push({id:b.id,deleted:true,updatedAt:Date.now()});sess=sess.filter(x=>x!==b.id);save();go("#/",true)}};
@@ -757,7 +759,7 @@ async function sync(){
    const u=await api("/cover/"+b.id,{method:"PUT",body:JSON.stringify({cover:b.cover})});
    if(u.ok){b._up=false;hc.set(b.id,true)}
   }
-  const need=nb.filter(b=>{const l=loc.get(b.id);return hc.get(b.id)&&!b._up&&!(l&&isData(l.cover)&&l.coverAt===b.coverAt)});
+  const need=nb.filter(b=>{const l=loc.get(b.id);return hc.get(b.id)&&!b.cvUrl&&!b._up&&!(l&&isData(l.cover)&&l.coverAt===b.coverAt)});
   for(let i=0;i<need.length;i+=3)await Promise.all(need.slice(i,i+3).map(async b=>{
    const c=await api("/cover/"+b.id);if(c.ok){const j=await c.json();if(j.cover)b.cover=j.cover}
   }));
@@ -799,6 +801,8 @@ function settings(){
  <div class="acts"><button class="btn pri" id="s_go">${ic("check",18)}儲存並同步</button><button class="btn" id="s_off">${ic("off",18)}停用同步</button></div>
  <p class="msg" id="s_msg">${esc(statusText())}</p></div>
  <div class="pane glass"><h2>畫面診斷</h2><p class="sub" id="dg">${esc(diag())}</p></div>
+ <div class="pane glass"><h2>封面儲存</h2><p class="sub" id="cvs"></p>
+ <div class="acts"><button class="btn" id="cv_clean">${ic("refresh",18)}整理封面、釋出空間</button></div></div>
  <div class="pane glass"><h2>備份</h2><p class="sub">把藏書（含封面）存成檔案，或從備份檔還原。還原時只會加入較新或不存在的書。</p>
  <div class="acts"><button class="btn" id="x_out">${ic("download",18)}匯出備份</button><button class="btn" id="x_in">${ic("upload",18)}匯入還原</button></div><input type="file" id="x_f" accept="application/json,.json" hidden></div>
 `;
@@ -810,6 +814,20 @@ function settings(){
   await sync();$("#s_msg")&&($("#s_msg").textContent=statusText());
  };
  $("#s_off").onclick=()=>{cfg={};saveCfg();setSync("ok");$("#s_url").value="";$("#s_tok").value="";$("#s_msg").textContent="已停用同步（本機資料保留）。"};
+const cvInfo=()=>{let sz=0;try{sz=(localStorage.getItem(KEY)||"").length}catch(e){}const n=books.filter(b=>isData(b.cover)).length;return"書籍資料約佔 "+(sz/1048576).toFixed(1)+" MB（瀏覽器上限約 5 MB），內嵌封面 "+n+" 張。新入庫的書不再內嵌封面，只存 ISBN，封面由 Worker 取得；手動上傳的封面才會存在這裡。"};
+ $("#cvs").textContent=cvInfo();
+ $("#cv_clean").onclick=async()=>{
+  const cand=books.filter(b=>isData(b.cover)&&!b.coverManual&&autoCover(b));
+  if(!cand.length){await dlg({title:"沒有需要整理的封面",msg:"目前沒有可以改由 Worker 取得的內嵌封面。",cancel:false,ok:"好"});return}
+  if(!await dlg({title:"整理封面？",msg:"有 "+cand.length+" 本書的封面存在這支手機裡，且書上有 ISBN。會先確認 Worker 能取得它們的封面，成功的才改成由 Worker 取得、並釋出儲存空間；失敗的保持原樣。\n\n注意：你手動上傳過的封面如果在這裡，會被網路版封面取代。",ok:"開始整理"}))return;
+  $("#cv_clean").disabled=true;let ok=0,fail=0;
+  for(let i=0;i<cand.length;i+=3)await Promise.all(cand.slice(i,i+3).map(async b=>{
+   try{const res=await tmo(autoCover(b),{cache:"reload"},25000);const ct=res.headers.get("content-type")||"";
+    if(res.ok&&ct.startsWith("image/")){const blob=await res.blob();if(blob.size>500){try{if(window.caches)await (await caches.open("bookshelf-covers")).put(autoCover(b),new Response(blob,{headers:{"content-type":ct}}))}catch(e){}b.cover="";b.cvUrl=true;delete b._up;b.updatedAt=Date.now();ok++;return}}}catch(e){}
+   fail++}));
+  save();$("#cv_clean").disabled=false;$("#cvs").textContent=cvInfo();
+  await dlg({title:"整理完成",msg:"成功 "+ok+" 本"+(fail?"，"+fail+" 本取不到（保持原樣，Worker 正常時可再整理一次）":"")+"。",cancel:false,ok:"好"});
+ };
  $("#x_out").onclick=()=>{
   const blob=new Blob([JSON.stringify({v:1,books,tombs})],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bookshelf-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();
