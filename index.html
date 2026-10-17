@@ -265,7 +265,8 @@ try{tombs=JSON.parse(localStorage.getItem(TKEY)||"[]")}catch(e){}
 try{cfg=JSON.parse(localStorage.getItem(CKEY)||"{}")}catch(e){}
 books.forEach(b=>{if(b.updatedAt==null)b.updatedAt=b.date||1;if(b.cover&&b.coverAt==null){b.coverAt=b.date||1;b._up=true}});
 let rev=0;
-const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(TKEY,JSON.stringify(tombs))}catch(e){}};
+let quotaWarned=false;
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(books));localStorage.setItem(TKEY,JSON.stringify(tombs))}catch(e){if(!quotaWarned){quotaWarned=true;setTimeout(()=>toast("瀏覽器儲存空間已滿，最近的變更可能不會保存"),0)}}};
 const saveCfg=()=>{try{localStorage.setItem(CKEY,JSON.stringify(cfg))}catch(e){}};
 const save=()=>{rev++;persist();schedSync()};
 const $=s=>document.querySelector(s), app=$("#app");
@@ -323,8 +324,13 @@ let coverRetry=new Set();
 try{coverRetry=new Set(JSON.parse(localStorage.getItem(CFKEY)||"[]"));localStorage.setItem(CFKEY,"[]")}catch(e){}
 window.__cf=id=>{try{const a=new Set(JSON.parse(localStorage.getItem(CFKEY)||"[]"));a.add(id);localStorage.setItem(CFKEY,JSON.stringify([...a]))}catch(e){}};
 const autoCover=b=>{const w=(cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):"")).replace(/\/+$/,"");const i=String(b.isbn||"").replace(/\D/g,"");return w&&/^(97[89]\d{10}|\d{10})$/.test(i)?w+"/img/"+i:""};
-const cover=b=>{let src=b.cover||autoCover(b);if(src&&!/^data:/.test(src)&&coverRetry.has(b.id))src+=(src.includes("?")?"&":"?")+"r="+STAMP;
- return`<div class="cover">${src?`<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-t="${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}" onerror="window.__cf(\'${esc(b.id)}\');var d=document.createElement(\'div\');d.className=\'ph\';d.textContent=this.dataset.t;this.replaceWith(d)">`:`<div class="ph">${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}</div>`}</div>`};
+// 網址型封面（匯入的書）載入成功後存進瀏覽器的 Cache Storage；Worker 偶爾沒回應時，改用本機存的那份
+const cbase=u=>String(u||"").replace(/[?#].*$/,"");
+window.__cs=async img=>{try{if(!/^https?:/.test(img.src)||!window.caches)return;const c=await caches.open("bookshelf-covers"),k=cbase(img.src);if(await c.match(k))return;const r=await fetch(img.src,{cache:"force-cache"});if(r.ok&&/^image\//.test(r.headers.get("content-type")||"")&&(+r.headers.get("content-length")||0)<2e6)await c.put(k,r)}catch(e){}};
+window.__ce=async img=>{try{if(window.caches){const m=await (await caches.open("bookshelf-covers")).match(cbase(img.dataset.u));if(m){img.onerror=null;img.src=URL.createObjectURL(await m.blob());return}}}catch(e){}
+ window.__cf(img.dataset.id);const d=document.createElement("div");d.className="ph";d.textContent=img.dataset.t;img.replaceWith(d)};
+const cover=b=>{let src=b.cover||autoCover(b);const base=src;if(src&&!/^data:/.test(src)&&coverRetry.has(b.id))src+=(src.includes("?")?"&":"?")+"r="+STAMP;
+ return`<div class="cover">${src?`<img src="${esc(src)}" alt="" loading="lazy" decoding="async" data-id="${esc(b.id)}" data-u="${esc(base)}" data-t="${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}" onload="window.__cs(this)" onerror="window.__ce(this)">`:`<div class="ph">${esc(b.pending?"ISBN "+b.isbn:(b.title||"無封面"))}</div>`}</div>`};
 
 function toast(m){const t=document.createElement("div");t.className="toast glass";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1900)}
 const setTitle=t=>{document.title=t==="我的書櫃"?t:t+"．我的書櫃"};
@@ -527,7 +533,7 @@ async function fillOne(id){
   if(!b.author&&r.author)b.author=r.author;if(!b.price&&r.price)b.price=r.price;
   if(!b.publisher&&r.publisher)b.publisher=r.publisher;if(!b.pubDate&&r.pubDate)b.pubDate=normDate(r.pubDate);
   if(!b.edition&&pe.edition)b.edition=pe.edition;
-  if(!b.cover&&r.cover){b.cover=r.cover;b.coverAt=Date.now();b._up=true}
+  if(!b.cover&&r.cover){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true}
   delete b.refill;b.updatedAt=Date.now();save();return;
  }
  const r=await lookup(b.isbn,{quiet:true});let _ed="";if(r&&r.title){const pe=splitEdition(clean(r.title));r.title=pe.title;_ed=pe.edition}
@@ -535,7 +541,7 @@ async function fillOne(id){
  if(!r){failed.add(id);renderQ();return}
  const gs=guessFromTitle(r.title||"");
  Object.assign(b,{title:r.title||b.title,author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed||b.edition||"",series:gs.series||r.title||"",vol:gs.vol,cat:gs.cat,pending:false,updatedAt:Date.now()});
- if(r.cover){b.cover=r.cover;b.coverAt=Date.now();b._up=true}
+ if(r.cover){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true}
  if(!b.author){const m=books.find(x=>x.id!==id&&skey(x)===skey(b)&&x.author);if(m)b.author=m.author}
  failed.delete(id);save();renderQ();
 }
@@ -564,6 +570,11 @@ const blank=()=>({id:"b"+Date.now().toString(36)+Math.random().toString(36).slic
 const tmo=(u,o={},ms=6000)=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return fetch(u,{...o,signal:c.signal})};
 // 日期統一成 YYYY/MM/DD（只有年月就補 01）
 const normDate=s=>{const m=String(s||"").match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);return m?m[1]+"/"+m[2].padStart(2,"0")+"/"+(m[3]||"1").padStart(2,"0"):""};
+// 把 Worker 抓到的封面縮小再存（最寬 420px、JPEG），避免幾百本書把瀏覽器的 5MB 儲存空間塞滿，造成「封面消失」
+const shrink=src=>new Promise(res=>{
+ if(!/^data:image\//.test(src||"")||src.length<60000)return res(src);
+ const im=new Image();im.onload=()=>{try{const s=Math.min(1,420/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);const o=c.toDataURL("image/jpeg",.78);res(o.length<src.length?o:src)}catch(e){res(src)}};
+ im.onerror=()=>res(src);im.src=src});
 const imgOK=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i.naturalWidth>40);i.onerror=()=>r(false);i.src=u});
 const lookupBase=()=>PROXY||(cfg.url?cfg.url.replace(/\/+$/,"")+"/?code=":"");
 const SRC=[
@@ -613,7 +624,7 @@ async function found(isbn){
  }
  $("#sm")&&($("#sm").textContent="辨識成功："+isbn+"，查詢書籍資料中…");
  const r=await lookup(isbn);if(r&&r.title)r.title=clean(r.title);draft=blank();let _ed="";if(r&&r.title){const pe=splitEdition(r.title);r.title=pe.title;_ed=pe.edition}draft.isbn=isbn;
- if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed,cover:r.cover||"",_src:r._src});
+ if(r){Object.assign(draft,{title:r.title||"",author:r.author||"",price:r.price||"",publisher:r.publisher||"",pubDate:normDate(r.pubDate),edition:_ed,cover:await shrink(r.cover||""),_src:r._src});
   const gs=guessFromTitle(draft.title);draft.series=gs.series;draft.vol=gs.vol;draft.cat=gs.cat;
   if(!draft.author){const m=books.find(x=>skey(x)===skeyS(gs.series)&&x.author);if(m)draft.author=m.author}}
  draft._miss=!r;draft._off=offline();go("#/edit/new");
@@ -688,7 +699,7 @@ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.editi
   if(!g("price").value&&r.price)g("price").value=r.price;
   if(!g("publisher").value&&r.publisher)g("publisher").value=r.publisher;
   if(!g("pubDate").value&&r.pubDate)g("pubDate").value=normDate(r.pubDate);
-  if(r.cover&&(!b.cover||b.pending)){b.cover=r.cover;b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)}
+  if(r.cover&&(!b.cover||b.pending)){b.cover=await shrink(r.cover);b.coverAt=Date.now();b._up=true;$("#cvw").innerHTML=cover(b)}
   if(b.cover)toast("已補上資料，請確認後儲存");
   else{await dlg({title:"資料已補上，但找不到封面",msg:"各來源的回應：\n"+(lastInfo||"無")+"\n\n可以用「更換封面」自己上傳，或稍後再試一次。",cancel:false,ok:"好"})}
  };
@@ -727,8 +738,12 @@ async function sync(){
  if(syncing){again=true;return}
  syncing=true;setSync("busy");const r0=rev;let failedSync=false;
  try{
+  const sentIds=books.map(b=>b.id);
   const r=await api("/sync",{method:"POST",body:JSON.stringify({books:[...books.map(pub),...tombs]})});
-  const merged=(await r.json()).books||[];
+  if(!r.ok)throw new Error("同步伺服器回應異常（"+r.status+"）");
+  const merged=(await r.json()).books;
+  // 伺服器回傳空白或不完整時不套用，避免本機的書（含封面）被清空
+  if(!Array.isArray(merged)||(()=>{const have=new Set(merged.map(m=>m.id));return sentIds.some(id=>!have.has(id))})())throw new Error("同步伺服器回應不完整，已略過這次同步");
   const loc=new Map(books.map(b=>[b.id,b])),hc=new Map(),nb=[],nt=[];
   for(const m of merged){
    if(m.deleted){nt.push({id:m.id,deleted:true,updatedAt:m.updatedAt});continue}
