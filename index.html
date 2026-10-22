@@ -197,7 +197,6 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .sec{margin-top:26px}
 .sech{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sech .cnt{flex:1;font-size:.8rem;color:var(--sub)}
-.miss{margin:20px 4px -4px;font-size:.82rem;color:var(--acc);font-weight:600}
 .sec.compact{margin-top:14px;padding:12px 14px 4px;border-radius:10px;background:var(--surf);border:1px solid var(--line)}
 .sec.compact .sech{cursor:pointer;margin-bottom:6px}
 .chev{display:grid;color:var(--sub);transition:transform .2s}.chev.up{transform:rotate(180deg)}
@@ -332,8 +331,6 @@ function guessFromTitle(title){
 }
 function groups(){const g={};books.forEach(b=>{(g[skey(b)||b.id]??=[]).push(b)});
  return Object.entries(g).map(([k,l])=>{l.sort((a,b)=>(a.vol??1e9)-(b.vol??1e9)||a.date-b.date);return{k,l,first:l[0],last:Math.max(...l.map(x=>x.date||0))}})}
-function gaps(l){const v=[...new Set(l.map(b=>b.vol).filter(n=>Number.isInteger(n)&&n>0))].sort((a,b)=>a-b);
- if(v.length<2)return[];const out=[];for(let i=v[0];i<v[v.length-1];i++)if(!v.includes(i))out.push(i);return out.length>12?[...out.slice(0,12),"…"]:out}
 (function(){let ch=false;
  for(const b of books){let t=clean(b.title),s=clean(b.series);
   const et=splitEdition(t),es=splitEdition(s);
@@ -422,8 +419,8 @@ const bookCard=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${
 const rail=(title,items)=>items.length?`<section class="row"><div class="rowh"><h3>${esc(title)}</h3></div><div class="rail">${items.join("")}</div></section>`:"";
 let heroK=null;
 function hero(x){
- const f=x.first,multi=x.l.length>1,miss=gaps(x.l),href=hrefOf(x);
- const meta=[f.author,multi?x.l.length+" 本":(f.vol!=null?"第 "+f.vol+" 集":""),miss.length?"缺第 "+miss.join("、")+" 集":""].filter(Boolean);
+ const f=x.first,multi=x.l.length>1,href=hrefOf(x);
+ const meta=[f.author,multi?x.l.length+" 本":(f.vol!=null?"第 "+f.vol+" 集":"")].filter(Boolean);
  return`<section class="hero"><div class="hbg" aria-hidden="true">${cover(f)}</div><div class="hcv" data-go="${href}">${cover(f)}</div>
   <div class="hk">${isNew(x.last)?"最新收藏":"精選收藏"}</div><h1>${esc(f.series||(f.pending?"ISBN "+f.isbn:f.title))}</h1>
   ${meta.length?`<p class="hm">${meta.map(esc).join("<i>·</i>")}</p>`:""}
@@ -433,14 +430,12 @@ function renderRows(){
  const gs=groups().sort((a,b)=>b.last-a.last),multi=gs.filter(x=>x.l.length>1);
  const recent=[...books].sort((a,b)=>(b.date||0)-(a.date||0)).slice(0,20);
  const top=[...multi].sort((a,b)=>b.l.length-a.l.length||b.last-a.last).slice(0,10);
- const holes=gs.filter(x=>gaps(x.l).length);
  const au=new Map();gs.forEach(x=>{const a=(x.first.author||"").trim();if(a)(au.get(a)||au.set(a,[]).get(a)).push(x)});
  const authors=[...au.entries()].filter(e=>e[1].length>1).sort((a,b)=>b[1].length-a[1].length).slice(0,3);
  $("#rows").innerHTML=
   rail("最近加入",recent.map(bookCard))+
   (top.length>=3?rail("收藏最多的系列",top.map((x,i)=>`<div class="tcard" data-go="${hrefOf(x)}"><span class="num">${i+1}</span><div class="cv">${cover(x.first)}</div></div>`)):"")+
   rail("我的系列",multi.map(x=>card(x)))+
-  rail("缺集待補",holes.map(x=>card(x,"缺 "+gaps(x.l).filter(n=>n!=="…").length+(gaps(x.l).includes("…")?"+":"")+" 集")))+
   authors.map(([a,l])=>rail(a+" 的作品",l.map(x=>card(x)))).join("");
 }
 function renderGrid(){
@@ -488,10 +483,10 @@ function series(k){
  setDock([backBtn(),{id:"rn",icon:"pencil",tip:"重新命名系列",fn:()=>renameSeries(k)},scanBtn()]);
  const full=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${cover(b)}</div><div class="t">${b.vol!=null?"第 "+b.vol+" 集":esc(b.title)}</div></div>`;
  const sec=(c)=>{
-  const l=g.l.filter(b=>(b.cat||"")===c),miss=gaps(l);
-  const meta=`${l.length} 本${miss.length?` · 缺第 ${miss.join("、")} 集`:""}`;
+  const l=g.l.filter(b=>(b.cat||"")===c);
+  const meta=`${l.length} 本`;
   const rn=c?`<button class="ib sm" data-rncat="${esc(c)}" data-sk="${esc(k)}" aria-label="重新命名分類">${ic("pencil",16)}</button>`:"";
-  if(!many)return`<section class="sec">${miss.length?`<p class="miss">缺第 ${miss.join("、")} 集</p>`:""}<div class="grid">${l.map(full).join("")}</div></section>`;
+  if(!many)return`<section class="sec"><div class="grid">${l.map(full).join("")}</div></section>`;
   const key=k+"|"+c,open=openCats.has(key);
   return`<section class="sec compact"><div class="sech" data-tog="${esc(key)}"><h3>${esc(c||"本篇")}</h3><span class="cnt">${meta}</span>${rn}<span class="chev${open?" up":""}">${ic("chev",18)}</span></div>`+
    (open?`<div class="grid">${l.map(full).join("")}</div>`
