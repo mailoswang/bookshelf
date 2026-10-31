@@ -150,7 +150,7 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .tools{display:flex;gap:10px;margin-bottom:6px;align-items:center}
 .search{flex:1;display:flex;align-items:center;gap:8px;border-radius:6px;padding:0 14px;height:46px;color:var(--sub);background:var(--solid);border:1px solid var(--line)}
 .search input{border:0;background:transparent;padding:0;height:100%;box-shadow:none!important;border-radius:0}
-.search .ib.pri{width:36px;height:36px;margin-right:-8px}
+.search .ib.pri{width:40px;height:34px;margin-right:-8px;border-radius:5px;box-shadow:none}
 
 /* ===== 橫向捲動的列 ===== */
 .row{margin-top:24px}
@@ -190,6 +190,13 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .cv.stack::after{transform:translate(10px,-10px);opacity:.4}
 .badge{position:absolute;right:6px;top:6px;z-index:2;min-width:22px;text-align:center;padding:1px 7px;border-radius:4px;font-size:.72rem;font-weight:800;color:#fff;background:rgba(0,0,0,.72)}
 .ribbon{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:3px 0;text-align:center;font-size:.68rem;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--acc);border-radius:0 0 4px 4px}
+
+/* 書籍詳情 */
+.dl{display:grid;grid-template-columns:auto 1fr;gap:12px 18px;margin:0}
+.dl dt{color:var(--sub);font-size:.85rem;white-space:nowrap}
+.dl dd{margin:0;font-size:.95rem;overflow-wrap:anywhere}
+.lnk{cursor:pointer;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
+main.still>*{animation:none}
 
 /* series */
 .pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
@@ -274,6 +281,7 @@ const I={
  off:'<path d="M18 6 6 18M6 6l12 12"/>',
  chev:'<path d="m6 9 6 6 6-6"/>',
  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+ home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h4.5v-6h4v6h4.5V10"/>',
  refresh:'<path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/>'
 };
 const ic=(n,s=20)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -384,14 +392,15 @@ function setDock(list){
 }
 const backBtn=()=>({id:"back",icon:"back",tip:"返回",fn:goBack});
 const scanBtn=()=>({id:"scan",icon:"scan",label:"掃描入庫",cls:"pri",fn:()=>{sess=[];go("#/add")}});
+const homeBtn=()=>({id:"home",icon:"home",tip:"回到首頁",fn:()=>{draft=null;go("#/")}});
 const cfgBtn=()=>({id:"cfg",icon:"sliders",tip:"設定",fn:()=>go("#/settings")});
 
 // ===== 路由 =====
-let lastHash=null,hist=[],scanDockFn=null;
+let lastHash=null,hist=[],scanDockFn=null,shelfPos=null;
 function trackHash(h){if(hist.length>1&&hist[hist.length-2]===h)hist.pop();else if(hist[hist.length-1]!==h)hist.push(h)}
 function go(h,rep){if(location.hash===h){route();return}if(rep){hist.pop();location.replace(h)}else location.hash=h}
 function parentOf(){const h=location.hash;
- if(h.startsWith("#/book/")){const b=books.find(x=>x.id===h.slice(7));if(b&&books.filter(x=>skey(x)===skey(b)).length>1)return"#/series/"+encodeURIComponent(skey(b));return"#/"}
+ if(h.startsWith("#/book/")){const q=h.slice(7).split("/");if(q[1]==="edit")return"#/book/"+q[0];const b=books.find(x=>x.id===q[0]);if(b&&books.filter(x=>skey(x)===skey(b)).length>1)return"#/series/"+encodeURIComponent(skey(b));return"#/"}
  if(h==="#/edit/new")return draft&&draft.isbn?"#/add":"#/";
  return"#/"}
 function goBack(){if(draft&&location.hash.startsWith("#/edit"))draft=null;if(hist.length>1)history.back();else go(parentOf())}
@@ -400,10 +409,16 @@ function route(){
  stopScan();scanDockFn=null;
  const raw=location.hash||"#/",h=raw.slice(1)||"/",p=h.split("/");
  trackHash(raw==="#"?"#/":raw);
- if(h!==lastHash){app.scrollTop=0;lastHash=h}
+ app.classList.remove("still");
+ if(h!==lastHash){
+  if(lastHash==="/")shelfPos={y:app.scrollTop,x:[...document.querySelectorAll("#rows .rail")].map(r=>r.scrollLeft)};
+  app.scrollTop=0;lastHash=h;
+  if(h==="/"&&shelfPos){const pos=shelfPos;shelfPos=null;app.classList.add("still");shelf();
+   document.querySelectorAll("#rows .rail").forEach((r,i)=>{r.scrollLeft=pos.x[i]||0});app.scrollTop=pos.y;return}
+ }
  if(h==="/")return shelf();
  if(p[1]==="series")return series(decodeURIComponent(p[2]));
- if(p[1]==="book")return edit(books.find(b=>b.id===p[2]),false);
+ if(p[1]==="book"){const b=books.find(x=>x.id===p[2]);return p[3]==="edit"?edit(b,false):view(b)}
  if(p[1]==="edit")return draft?edit(draft,true):go("#/",true);
  if(p[1]==="add")return scan();
  if(p[1]==="settings")return settings();
@@ -480,7 +495,7 @@ function series(k){
  const minD=c=>Math.min(...g.l.filter(b=>(b.cat||"")===c).map(b=>b.date||0));
  const cats=[...new Set(g.l.map(b=>b.cat||""))].sort((a,b)=>a===""?-1:b===""?1:minD(a)-minD(b));
  const many=cats.length>1;
- setDock([backBtn(),{id:"rn",icon:"pencil",tip:"重新命名系列",fn:()=>renameSeries(k)},scanBtn()]);
+ setDock([backBtn(),homeBtn(),{id:"rn",icon:"pencil",tip:"重新命名系列",fn:()=>renameSeries(k)},scanBtn()]);
  const full=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${cover(b)}</div><div class="t">${b.vol!=null?"第 "+b.vol+" 集":esc(b.title)}</div></div>`;
  const sec=(c)=>{
   const l=g.l.filter(b=>(b.cat||"")===c);
@@ -520,7 +535,7 @@ function scan(){
  <div class="search glass" style="margin-top:14px">${ic("search",18)}<input id="mi" inputmode="numeric" placeholder="或手動輸入 ISBN" enterkeyhint="go"><button class="ib pri" id="mg" aria-label="查詢">${ic("search",18)}</button></div>
  <div id="ql"></div>`;
  const msg=()=>{const sm=$("#sm");if(sm)sm.textContent=quick?"快速入庫已開啟：掃到條碼就自動入庫，資料在背景補齊。":"對準書背的 ISBN 條碼（978／979 開頭）"};
- scanDockFn=()=>setDock([backBtn(),
+ scanDockFn=()=>setDock([backBtn(),...(sess.length?[]:[homeBtn()]),
   {id:"quick",icon:"bolt",label:"快速入庫",cls:quick?"on":"",fn:()=>{quick=!quick;try{localStorage.setItem(QKEY,quick?"1":"0")}catch(e){}msg();scanDockFn&&scanDockFn()}},
   {id:"manual",icon:"pencil",tip:"手動建檔",fn:()=>{draft=blank();go("#/edit/new")}},
   ...(sess.length?[{id:"done",icon:"check",label:"完成 "+sess.length,cls:"pri",fn:()=>go("#/")}]:[])]);
@@ -684,9 +699,25 @@ async function found(isbn){
 }
 
 // ===== 書籍詳情／入庫確認 =====
+// ===== 書籍詳情（只看，不直接編輯）=====
+function view(b){
+ if(!b){go("#/",true);return}
+ const name=b.pending&&/^ISBN /.test(b.title)?b.title:(b.title||"未命名");
+ setTitle(name);
+ const sh=books.filter(x=>skey(x)===skey(b)).length>1?"#/series/"+encodeURIComponent(skey(b)):"";
+ const day=t=>{if(!t)return"";const d=new Date(t);return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
+ const rows=[["系列",b.series&&(sh||b.series!==b.title)?b.series:"",sh],["集數",b.vol!=null?"第 "+b.vol+" 集":""],["分類",b.cat],["作者",b.author],["出版社",b.publisher],["出版日期",b.pubDate],["版本",b.edition],["定價",b.price],["ISBN",b.isbn],["加入日期",day(b.date)],["備註",b.note]].filter(r=>r[1]);
+ app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(b)}</div><div class="hcv">${cover(b)}</div>
+  <div class="hk">${b.vol!=null?"第 "+b.vol+" 集":"藏書"}</div><h1>${esc(name)}</h1>${b.author?`<p class="hm">${esc(b.author)}</p>`:""}
+  ${b.edition?`<div class="pills"><span class="pill">${esc(b.edition)}</span></div>`:""}</section>
+ ${b.pending||b.refill?`<p class="msg c">這本書的資料還沒補齊，可以按「編輯」重新查詢或手動填寫。</p>`:""}
+ ${rows.length?`<div class="pane glass" style="margin-top:18px"><dl class="dl">${rows.map(([k,v,h])=>`<dt>${k}</dt><dd>${h?`<span class="lnk" data-go="${h}">${esc(v)}</span>`:esc(v).replace(/\n/g,"<br>")}</dd>`).join("")}</dl></div>`:""}`;
+ setDock([backBtn(),homeBtn(),{id:"ed",icon:"pencil",label:"編輯",cls:"pri",fn:()=>go("#/book/"+b.id+"/edit")}]);
+}
+
 function edit(b,isNew){
  if(!b){go("#/",true);return}
- setTitle(isNew?"確認書籍資料":"書籍詳情");
+ setTitle(isNew?"確認書籍資料":"編輯書籍");
  const ex=isNew&&b.isbn?books.find(x=>x.id!==b.id&&sameIsbn(x.isbn,b.isbn)):null;
  const names=[...new Set(books.map(x=>(x.series||"").trim()).filter(Boolean))];
  const notes=[
@@ -767,10 +798,11 @@ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.editi
   if(isNew){books.push(b);draft=null}save();
   toast(isNew?"已加入收藏":"已儲存");
   if(next){go("#/add",true);return}
+  if(!isNew){goBack();return}
   go(books.some(x=>x.id!==b.id&&skey(x)===skey(b))?"#/series/"+encodeURIComponent(skey(b)):"#/",true);
  };
  setDock(isNew?[backBtn(),{id:"okn",icon:"scan",label:"入庫並續掃",fn:()=>commit(true)},{id:"ok",icon:"check",label:"確認入庫",cls:"pri",fn:()=>commit(false)}]
-              :[backBtn(),{id:"del",icon:"trash",tip:"移出收藏",cls:"dng",fn:del},{id:"ok",icon:"check",label:"儲存變更",cls:"pri",fn:()=>commit(false)}]);
+              :[backBtn(),homeBtn(),{id:"del",icon:"trash",tip:"移出收藏",cls:"dng",fn:del},{id:"ok",icon:"check",label:"儲存變更",cls:"pri",fn:()=>commit(false)}]);
 }
 
 // ===== 跨裝置同步（Cloudflare Worker + KV）=====
@@ -842,7 +874,7 @@ function setTheme(m){try{localStorage.setItem("bookshelf.theme",m)}catch(e){}app
 // ===== 設定 =====
 function settings(){
  setTitle("設定");
- setDock([backBtn()]);
+ setDock([backBtn(),homeBtn()]);
  const base=cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):""),mode=themeMode();
  app.innerHTML=`<div class="pane glass"><h2>外觀</h2><p class="sub">自動會跟隨手機的深色模式設定。</p>
  <div class="seg" id="seg">${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button data-th="${v}" class="${mode===v?"on":""}">${l}</button>`).join("")}</div></div>
@@ -851,9 +883,6 @@ function settings(){
  <label>同步密碼（SYNC_TOKEN）</label><input id="s_tok" type="password" value="${esc(cfg.token||"")}" autocomplete="off">
  <div class="acts"><button class="btn pri" id="s_go">${ic("check",18)}儲存並同步</button><button class="btn" id="s_off">${ic("off",18)}停用同步</button></div>
  <p class="msg" id="s_msg">${esc(statusText())}</p></div>
- <div class="pane glass"><h2>畫面診斷</h2><p class="sub" id="dg">${esc(diag())}</p></div>
- <div class="pane glass"><h2>封面儲存</h2><p class="sub" id="cvs"></p>
- <div class="acts"><button class="btn" id="cv_warm">${ic("refresh",18)}預載全部封面到雲端(建議在 Wi‑Fi 下做一次)</button><button class="btn" id="cv_clean">${ic("refresh",18)}整理封面、釋出空間</button></div></div>
  <div class="pane glass"><h2>備份</h2><p class="sub">把藏書（含封面）存成檔案，或從備份檔還原。還原時只會加入較新或不存在的書。</p>
  <div class="acts"><button class="btn" id="x_out">${ic("download",18)}匯出備份</button><button class="btn" id="x_in">${ic("upload",18)}匯入還原</button></div><input type="file" id="x_f" accept="application/json,.json" hidden></div>
 `;
@@ -865,32 +894,6 @@ function settings(){
   await sync();$("#s_msg")&&($("#s_msg").textContent=statusText());
  };
  $("#s_off").onclick=()=>{cfg={};saveCfg();setSync("ok");$("#s_url").value="";$("#s_tok").value="";$("#s_msg").textContent="已停用同步（本機資料保留）。"};
-const cvInfo=()=>{let sz=0;try{sz=(localStorage.getItem(KEY)||"").length}catch(e){}const n=books.filter(b=>isData(b.cover)).length;return"書籍資料約佔 "+(sz/1048576).toFixed(1)+" MB（瀏覽器上限約 5 MB），內嵌封面 "+n+" 張。新入庫的書不再內嵌封面，只存 ISBN，封面由 Worker 取得；手動上傳的封面才會存在這裡。"};
- $("#cvs").textContent=cvInfo();
- $("#cv_warm").onclick=async()=>{
-  const list=books.filter(b=>!b.deleted&&autoCover(b));
-  if(!list.length){await dlg({title:"沒有需要預載的書",msg:"沒有帶 ISBN 的書,或尚未設定 Worker。",cancel:false,ok:"好"});return}
-  const btn=$("#cv_warm");btn.disabled=true;let done=0,ok=0,fail=0;
-  const tick=()=>{$("#cvs").textContent="預載中 "+done+" / "+list.length+"(成功 "+ok+",失敗 "+fail+")"};tick();
-  for(let i=0;i<list.length;i+=3)await Promise.all(list.slice(i,i+3).map(async b=>{
-   try{const res=await tmo(autoCover(b),{cache:"reload"},30000);const ct=res.headers.get("content-type")||"";
-    if(res.ok&&ct.startsWith("image/")){const blob=await res.blob();if(blob.size>500){try{if(window.caches)await (await caches.open("bookshelf-covers")).put(cbase(autoCover(b)),new Response(blob,{headers:{"content-type":ct}}))}catch(e){}ok++}else fail++}else fail++}catch(e){fail++}
-   done++;tick()}));
-  btn.disabled=false;$("#cvs").textContent=cvInfo();
-  await dlg({title:"預載完成",msg:"成功 "+ok+" 本"+(fail?","+fail+" 本取不到(博客來暫時擋住或查無封面,稍後可再按一次)":"")+"。\n之後這些封面會直接從雲端讀取,載入會快很多。",cancel:false,ok:"好"});
- };
- $("#cv_clean").onclick=async()=>{
-  const cand=books.filter(b=>isData(b.cover)&&!b.coverManual&&autoCover(b));
-  if(!cand.length){await dlg({title:"沒有需要整理的封面",msg:"目前沒有可以改由 Worker 取得的內嵌封面。",cancel:false,ok:"好"});return}
-  if(!await dlg({title:"整理封面？",msg:"有 "+cand.length+" 本書的封面存在這支手機裡，且書上有 ISBN。會先確認 Worker 能取得它們的封面，成功的才改成由 Worker 取得、並釋出儲存空間；失敗的保持原樣。\n\n注意：你手動上傳過的封面如果在這裡，會被網路版封面取代。",ok:"開始整理"}))return;
-  $("#cv_clean").disabled=true;let ok=0,fail=0;
-  for(let i=0;i<cand.length;i+=3)await Promise.all(cand.slice(i,i+3).map(async b=>{
-   try{const res=await tmo(autoCover(b),{cache:"reload"},25000);const ct=res.headers.get("content-type")||"";
-    if(res.ok&&ct.startsWith("image/")){const blob=await res.blob();if(blob.size>500){try{if(window.caches)await (await caches.open("bookshelf-covers")).put(autoCover(b),new Response(blob,{headers:{"content-type":ct}}))}catch(e){}b.cover="";b.cvUrl=true;delete b._up;b.updatedAt=Date.now();ok++;return}}}catch(e){}
-   fail++}));
-  save();$("#cv_clean").disabled=false;$("#cvs").textContent=cvInfo();
-  await dlg({title:"整理完成",msg:"成功 "+ok+" 本"+(fail?"，"+fail+" 本取不到（保持原樣，Worker 正常時可再整理一次）":"")+"。",cancel:false,ok:"好"});
- };
  $("#x_out").onclick=()=>{
   const blob=new Blob([JSON.stringify({v:1,books,tombs})],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bookshelf-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();
@@ -945,12 +948,6 @@ addEventListener("resize",()=>setTimeout(vpCheck,100));
 addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
 setTimeout(vpCheck,100);
-function diag(){
- const p=document.createElement("div");p.style.cssText="position:fixed;left:0;bottom:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden";document.body.appendChild(p);
- const sb=p.offsetHeight;p.remove();
- const vv=window.visualViewport;
- return"innerHeight "+innerHeight+"／螢幕 "+screen.height+"／visualViewport "+(vv?Math.round(vv.height):"-")+"／底部安全區 "+sb;
-}
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
  const dk=e.target.closest("[data-dk]");if(dk){const f=dockActs[dk.dataset.dk];f&&f();return}
