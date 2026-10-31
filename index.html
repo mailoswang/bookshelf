@@ -30,7 +30,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;--surf:#fff;
  --glass:rgba(255,255,255,.86);--solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;--pop:#fff;
- --ph1:#5a5a5a;--ph2:#2b2b2b;
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.5);--lg-rim:rgba(255,255,255,.95);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  color-scheme:light;
 }
@@ -38,7 +38,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;--surf:#1f1f1f;
  --glass:rgba(24,24,24,.82);--solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#ff5f57;--stk:#333;--pop:#1f1f1f;
- --ph1:#3a3a3a;--ph2:#1b1b1b;
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.42);--lg-rim:rgba(255,255,255,.24);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  color-scheme:dark;
 }
@@ -62,22 +62,47 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .edge2{position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none;
  background:linear-gradient(to top,color-mix(in srgb,var(--bg1) 92%,transparent) 0%,color-mix(in srgb,var(--bg1) 45%,transparent) 50%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 .short .edge2{background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
-.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;display:flex;align-items:center;gap:4px;padding:6px;border-radius:999px;max-width:calc(100% - 20px)}
-.dock:empty{display:none}
+/* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
+.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
+ width:min(calc(100% - 64px),360px);height:62px;padding:4px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate}
+.dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
+ backdrop-filter:blur(12px) saturate(190%) brightness(1.04);-webkit-backdrop-filter:blur(12px) saturate(190%) brightness(1.04);
+ box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
+.dock::before,.pacts::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+ background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.1) 28%,rgba(255,255,255,0) 50%,rgba(255,255,255,.08) 72%,rgba(255,255,255,.4));
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+.dock .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/4);z-index:-1;border-radius:999px;
+ background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 .5px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.18);
+ transform:translateX(calc(var(--i,0)*100%));transition:transform .55s cubic-bezier(.3,1.4,.5,1),opacity .2s}
+:root:not([data-theme="dark"]) .dock .ind{background:rgba(0,0,0,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
+.dock .ind.off{opacity:0}
+.nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border:0;padding:0;background:transparent;
+ font:inherit;font-size:.68rem;font-weight:600;color:var(--sub);cursor:pointer;border-radius:999px;transition:color .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+.nv .ic{width:23px;height:23px}
+.nv.on{color:var(--ink)}
+.nv:active{transform:scale(.88)}
+.nv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.av{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(160deg,#ff3b44,#b20710);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 6px rgba(229,9,20,.3);transition:opacity .2s}
+.nv:not(.on) .av{opacity:.7}
+.dock.syncing [data-dk="cfg"]::after,.dock.err [data-dk="cfg"]::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:var(--sub)}
+.dock.syncing [data-dk="cfg"]::after{animation:pulse 1s ease-in-out infinite}
+.dock.err [data-dk="cfg"]::after{background:var(--acc)}
+/* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
+.pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 78px + var(--kb,0px));z-index:29;
+ display:flex;gap:6px;padding:5px;border-radius:999px;max-width:calc(100% - 20px);animation:none!important;
+ background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),var(--lg-bg);backdrop-filter:blur(12px) saturate(190%);-webkit-backdrop-filter:blur(12px) saturate(190%);
+ box-shadow:0 10px 26px rgba(0,0,0,.4),inset 0 1px 0 var(--lg-rim)}
+.pacts .btn{border-radius:999px;border:0;background:transparent;padding:10px 16px;white-space:nowrap}
+.pacts .btn.pri{background:var(--acc)}
+.pacts .btn.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.pacts .btn.dng{color:var(--danger)}
+main.acts-on{padding-bottom:calc(184px + env(safe-area-inset-bottom,0px))}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;padding:0;transition:transform .2s ease,background .2s}
 .ib:hover{background:var(--solid)}
 .ib:active{transform:scale(.92)}
 .ib.sm{width:32px;height:32px;color:var(--sub)}
 .ib.dng{color:var(--danger)}
 .ib.pri{background:var(--acc);color:var(--accink);box-shadow:0 4px 14px rgba(229,9,20,.35)}
-.dk{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:999px;border:0;background:transparent;font:inherit;font-weight:700;font-size:.92rem;color:var(--ink);cursor:pointer;white-space:nowrap;transition:transform .2s ease,background .2s}
-.dk.pri{color:var(--accink);padding:0 20px 0 16px;background:var(--acc);box-shadow:0 6px 18px rgba(229,9,20,.4)}
-.dk.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 40%,transparent)}
-.dock .ib:active,.dock .dk:active{transform:scale(.94);background-color:var(--solid)}
-.dock .dk.pri:active{background-color:var(--acc2)}
-.dock.syncing [data-dk="cfg"]::after,.dock.err [data-dk="cfg"]::after{content:"";position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--sub)}
-.dock.syncing [data-dk="cfg"]::after{animation:pulse 1s ease-in-out infinite}
-.dock.err [data-dk="cfg"]::after{background:var(--acc)}
 @keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
 
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -87,7 +112,7 @@ main{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));overflow-y:a
 main>*{animation:rise .4s ease both}
 main>*:nth-child(2){animation-delay:.04s}main>*:nth-child(3){animation-delay:.08s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.dk,.card{transition:none}}
+@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.nv,.card,.dock .ind{transition:none}}
 
 /* buttons / fields */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:.95rem;color:var(--ink);cursor:pointer;padding:10px 18px;border-radius:6px;border:1px solid var(--line);background:var(--solid)}
@@ -198,6 +223,32 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .lnk{cursor:pointer;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
 main.still>*{animation:none}
 
+/* 我的書櫃 */
+.mehead{text-align:center;padding:14px 0 4px}
+.meav{width:84px;height:84px;margin:0 auto 14px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(160deg,#ff3b44,#b20710);box-shadow:0 16px 36px rgba(229,9,20,.35),inset 0 1px 0 rgba(255,255,255,.35)}
+.mehead h1{margin:0;font-size:1.7rem;font-weight:900}
+.mstats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.mstat{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:16px}
+.mstat.wide{grid-column:1/-1}
+.mstat .l{font-size:.8rem;color:var(--sub);font-weight:600}
+.mstat .n{font-size:2.1rem;font-weight:900;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.mstat .n small{font-size:.85rem;font-weight:600;color:var(--sub);margin-left:4px}
+.mstat.wide .n{color:var(--acc)}
+.mstat .d{font-size:.78rem;color:var(--sub);margin-top:6px}
+.about{position:relative;overflow:hidden;margin-top:26px;border-radius:14px;padding:22px 18px;border:1px solid var(--line);
+ background:radial-gradient(120% 70% at 100% 0%,color-mix(in srgb,var(--acc) 26%,transparent),transparent 60%),var(--surf)}
+.abhead{display:flex;gap:14px;align-items:center}
+.abicon{width:58px;height:58px;border-radius:14px;flex:none;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.abk{font-size:.7rem;font-weight:800;letter-spacing:.24em;color:var(--acc)}
+.abhead h2{font-size:1.35rem;font-weight:900}
+.abtxt{margin:16px 0 0;font-size:.93rem;line-height:1.8}
+.feats{display:grid;gap:16px;margin-top:20px}
+@media(min-width:560px){.feats{grid-template-columns:1fr 1fr}}
+.feat{display:flex;gap:12px;align-items:flex-start}
+.fi{flex:none;width:40px;height:40px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(160deg,#ff3b44,#b20710);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.feat b{font-size:.93rem}.feat p{margin:2px 0 0;font-size:.82rem;color:var(--sub);line-height:1.65}
+.abfoot{margin:22px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:.78rem;color:var(--sub);line-height:1.7}
+
 /* series */
 .pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 .pill{font-size:.78rem;font-weight:600;padding:3px 10px;border-radius:4px;background:var(--solid);border:1px solid var(--line)}
@@ -250,7 +301,7 @@ main.still>*{animation:none}
 .spin{display:block;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--acc) 25%,transparent);border-top-color:var(--acc);animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 82px + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:6px;font-size:.9rem;font-weight:600;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:6px;font-size:.9rem;font-weight:600;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
 </style>
 </head>
 <body>
@@ -383,17 +434,32 @@ function dlg(o){return new Promise(res=>{
 })}
 
 // ===== 底部懸浮列（所有頁面的導覽與操作都集中在這裡）=====
-let dockActs={};
-function setDock(list){
- dockActs={};
- $("#dock").innerHTML=list.map(a=>{dockActs[a.id]=a.fn;
-  return a.label?`<button class="dk ${a.cls||""}" data-dk="${a.id}" aria-label="${esc(a.label)}">${a.icon?ic(a.icon,20):""}<span>${esc(a.label)}</span></button>`
-                 :`<button class="ib ${a.cls||""}" data-dk="${a.id}" aria-label="${esc(a.tip||a.id)}">${ic(a.icon)}</button>`}).join("");
+let dockActs={},navActs={};
+// 導航欄固定四格：首頁、入庫、設定、我的書櫃；書籍／系列頁把「入庫」換成「回上頁」。
+// 只建一次，換頁時只更新狀態，玻璃膠囊才會滑過去
+const AV=`<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6.5" width="4.6" height="12.5" rx="1" fill="#fff" opacity=".8"/><rect x="9.6" y="3.5" width="5" height="15.5" rx="1" fill="#fff"/><rect x="16" y="7" width="4.2" height="12" rx="1" fill="#fff" opacity=".8" transform="rotate(12 20.2 19)"/><rect x="2.5" y="19.6" width="19" height="1.8" rx=".9" fill="#fff"/></svg>`;
+function renderNav(){
+ const el=$("#dock"),h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h);
+ const cur=h==="#/"||h==="#"||sub?0:h.startsWith("#/add")?1:h.startsWith("#/settings")?2:h.startsWith("#/me")?3:-1;
+ const items=[{id:"home",icon:"home",label:"首頁",fn:()=>{draft=null;go("#/")}},
+  sub?{id:"back",icon:"back",label:"回上頁",fn:goBack}:{id:"scan",icon:"scan",label:"入庫",fn:()=>{sess=[];go("#/add")}},
+  {id:"cfg",icon:"sliders",label:"設定",fn:()=>go("#/settings")},
+  {id:"me",label:"我的書櫃",av:true,fn:()=>go("#/me")}];
+ navActs={};items.forEach(a=>navActs[a.id]=a.fn);
+ if(!el.querySelector(".ind"))el.innerHTML=`<span class="ind" aria-hidden="true"></span>`+items.map(()=>`<button class="nv"></button>`).join("");
+ el.querySelectorAll(".nv").forEach((b,i)=>{const a=items[i];
+  if(b.dataset.dk!==a.id){b.dataset.dk=a.id;b.setAttribute("aria-label",a.label);b.innerHTML=(a.av?`<span class="av">${AV}</span>`:ic(a.icon,25))+`<span>${a.label}</span>`}
+  b.classList.toggle("on",i===cur);if(i===cur)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ const ind=el.querySelector(".ind");ind.classList.toggle("off",cur<0);if(cur>=0)ind.style.setProperty("--i",cur);
 }
-const backBtn=()=>({id:"back",icon:"back",tip:"返回",fn:goBack});
-const scanBtn=()=>({id:"scan",icon:"scan",label:"掃描入庫",cls:"pri",fn:()=>{sess=[];go("#/add")}});
-const homeBtn=()=>({id:"home",icon:"home",tip:"回到首頁",fn:()=>{draft=null;go("#/")}});
-const cfgBtn=()=>({id:"cfg",icon:"sliders",tip:"設定",fn:()=>go("#/settings")});
+// 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
+function setActs(list){
+ dockActs={};let el=$("#pacts");
+ if(!list||!list.length){if(el)el.remove();app.classList.remove("acts-on");return}
+ if(!el||el.parentNode!==app){el=document.createElement("div");el.id="pacts";el.className="pacts";app.appendChild(el)}
+ app.classList.add("acts-on");
+ el.innerHTML=list.map(a=>{dockActs[a.id]=a.fn;return`<button class="btn ${a.cls||""}" data-dk="${a.id}" aria-label="${esc(a.label||a.tip)}">${a.icon?ic(a.icon,18):""}${a.label?`<span>${esc(a.label)}</span>`:""}</button>`}).join("");
+}
 
 // ===== 路由 =====
 let lastHash=null,hist=[],scanDockFn=null,shelfPos=null;
@@ -406,7 +472,7 @@ function parentOf(){const h=location.hash;
 function goBack(){if(draft&&location.hash.startsWith("#/edit"))draft=null;if(hist.length>1)history.back();else go(parentOf())}
 function stopScan(){clearTimeout(timer);timer=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
 function route(){
- stopScan();scanDockFn=null;
+ stopScan();scanDockFn=null;setActs(null);renderNav();
  const raw=location.hash||"#/",h=raw.slice(1)||"/",p=h.split("/");
  trackHash(raw==="#"?"#/":raw);
  app.classList.remove("still");
@@ -422,6 +488,7 @@ function route(){
  if(p[1]==="edit")return draft?edit(draft,true):go("#/",true);
  if(p[1]==="add")return scan();
  if(p[1]==="settings")return settings();
+ if(p[1]==="me")return me();
  shelf();
 }
 
@@ -465,7 +532,6 @@ function renderGrid(){
 }
 function shelf(){
  setTitle("我的書櫃");
- setDock([scanBtn(),cfgBtn()]);
  if(!books.length){app.innerHTML=`<div class="empty glass">${ic("book",44)}書架還是空的<br>點擊下方「掃描入庫」，<br>掃描書背的 ISBN 條碼，開始收藏第一本書。</div>`;return}
  const total=books.reduce((s,b)=>{const m=String(b.price||"").match(/^\s*(?:NT\$?|\$)?\s*([\d,]+)\s*$/i);return s+(m?+m[1].replace(/,/g,""):0)},0);
  const pend=books.filter(b=>b.pending||b.refill).length;
@@ -495,7 +561,6 @@ function series(k){
  const minD=c=>Math.min(...g.l.filter(b=>(b.cat||"")===c).map(b=>b.date||0));
  const cats=[...new Set(g.l.map(b=>b.cat||""))].sort((a,b)=>a===""?-1:b===""?1:minD(a)-minD(b));
  const many=cats.length>1;
- setDock([backBtn(),homeBtn(),{id:"rn",icon:"pencil",tip:"重新命名系列",fn:()=>renameSeries(k)},scanBtn()]);
  const full=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${cover(b)}</div><div class="t">${b.vol!=null?"第 "+b.vol+" 集":esc(b.title)}</div></div>`;
  const sec=(c)=>{
   const l=g.l.filter(b=>(b.cat||"")===c);
@@ -508,7 +573,8 @@ function series(k){
         :`<div class="strip" data-tog="${esc(key)}">${l.map((b,j)=>`<div class="mini" style="z-index:${l.length-j}" title="${esc(b.vol!=null?"第 "+b.vol+" 集":b.title)}">${cover(b)}</div>`).join("")}</div>`)+`</section>`;
  };
  app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(f)}</div><div class="hcv">${cover(f)}</div><div class="hk">系列</div><h1>${esc(f.series||f.title)}</h1><p class="hm">${esc(f.author||"作者未填")}</p>
-  <div class="pills"><span class="pill">${g.l.length} 本</span>${many?`<span class="pill">${cats.length} 個分類</span>`:""}</div></section>`+cats.map(sec).join("");
+  <div class="pills"><span class="pill">${g.l.length} 本</span>${many?`<span class="pill">${cats.length} 個分類</span>`:""}</div>
+  <div class="hacts"><button class="btn dim" data-rnseries="${esc(k)}">${ic("pencil",18)}重新命名</button></div></section>`+cats.map(sec).join("");
 }
 function goSeries(name){const nh="#/series/"+encodeURIComponent(skeyS(name));if(location.hash===nh)route();else location.hash=nh}
 async function renameSeries(k){
@@ -535,9 +601,9 @@ function scan(){
  <div class="search glass" style="margin-top:14px">${ic("search",18)}<input id="mi" inputmode="numeric" placeholder="或手動輸入 ISBN" enterkeyhint="go"><button class="ib pri" id="mg" aria-label="查詢">${ic("search",18)}</button></div>
  <div id="ql"></div>`;
  const msg=()=>{const sm=$("#sm");if(sm)sm.textContent=quick?"快速入庫已開啟：掃到條碼就自動入庫，資料在背景補齊。":"對準書背的 ISBN 條碼（978／979 開頭）"};
- scanDockFn=()=>setDock([backBtn(),...(sess.length?[]:[homeBtn()]),
+ scanDockFn=()=>setActs([
   {id:"quick",icon:"bolt",label:"快速入庫",cls:quick?"on":"",fn:()=>{quick=!quick;try{localStorage.setItem(QKEY,quick?"1":"0")}catch(e){}msg();scanDockFn&&scanDockFn()}},
-  {id:"manual",icon:"pencil",tip:"手動建檔",fn:()=>{draft=blank();go("#/edit/new")}},
+  {id:"manual",icon:"pencil",label:"手動建檔",fn:()=>{draft=blank();go("#/edit/new")}},
   ...(sess.length?[{id:"done",icon:"check",label:"完成 "+sess.length,cls:"pri",fn:()=>go("#/")}]:[])]);
  scanDockFn();msg();renderQ();
  const submit=()=>{const v=$("#mi").value.replace(/[-\s]/g,"");if(!isbnOK(v)){$("#sm").textContent="ISBN 格式或檢查碼不正確";return}
@@ -709,10 +775,10 @@ function view(b){
  const rows=[["系列",b.series&&(sh||b.series!==b.title)?b.series:"",sh],["集數",b.vol!=null?"第 "+b.vol+" 集":""],["分類",b.cat],["作者",b.author],["出版社",b.publisher],["出版日期",b.pubDate],["版本",b.edition],["定價",b.price],["ISBN",b.isbn],["加入日期",day(b.date)],["備註",b.note]].filter(r=>r[1]);
  app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(b)}</div><div class="hcv">${cover(b)}</div>
   <div class="hk">${b.vol!=null?"第 "+b.vol+" 集":"藏書"}</div><h1>${esc(name)}</h1>${b.author?`<p class="hm">${esc(b.author)}</p>`:""}
-  ${b.edition?`<div class="pills"><span class="pill">${esc(b.edition)}</span></div>`:""}</section>
+  ${b.edition?`<div class="pills"><span class="pill">${esc(b.edition)}</span></div>`:""}
+  <div class="hacts"><button class="btn play" data-go="#/book/${b.id}/edit">${ic("pencil",18)}編輯</button></div></section>
  ${b.pending||b.refill?`<p class="msg c">這本書的資料還沒補齊，可以按「編輯」重新查詢或手動填寫。</p>`:""}
  ${rows.length?`<div class="pane glass" style="margin-top:18px"><dl class="dl">${rows.map(([k,v,h])=>`<dt>${k}</dt><dd>${h?`<span class="lnk" data-go="${h}">${esc(v)}</span>`:esc(v).replace(/\n/g,"<br>")}</dd>`).join("")}</dl></div>`:""}`;
- setDock([backBtn(),homeBtn(),{id:"ed",icon:"pencil",label:"編輯",cls:"pri",fn:()=>go("#/book/"+b.id+"/edit")}]);
 }
 
 function edit(b,isNew){
@@ -801,8 +867,8 @@ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.editi
   if(!isNew){goBack();return}
   go(books.some(x=>x.id!==b.id&&skey(x)===skey(b))?"#/series/"+encodeURIComponent(skey(b)):"#/",true);
  };
- setDock(isNew?[backBtn(),{id:"okn",icon:"scan",label:"入庫並續掃",fn:()=>commit(true)},{id:"ok",icon:"check",label:"確認入庫",cls:"pri",fn:()=>commit(false)}]
-              :[backBtn(),homeBtn(),{id:"del",icon:"trash",tip:"移出收藏",cls:"dng",fn:del},{id:"ok",icon:"check",label:"儲存變更",cls:"pri",fn:()=>commit(false)}]);
+ setActs(isNew?[{id:"okn",icon:"scan",label:"入庫並續掃",fn:()=>commit(true)},{id:"ok",icon:"check",label:"確認入庫",cls:"pri",fn:()=>commit(false)}]
+              :[{id:"del",icon:"trash",label:"移出",cls:"dng",fn:del},{id:"ok",icon:"check",label:"儲存變更",cls:"pri",fn:()=>commit(false)}]);
 }
 
 // ===== 跨裝置同步（Cloudflare Worker + KV）=====
@@ -871,10 +937,35 @@ function applyTheme(){
 }
 function setTheme(m){try{localStorage.setItem("bookshelf.theme",m)}catch(e){}applyTheme()}
 
+// ===== 我的書櫃：收藏統計 + App 介紹 =====
+function me(){
+ setTitle("關於我的書櫃");
+ const gs=groups(),multi=gs.filter(x=>x.l.length>1).length;
+ let total=0,priced=0;
+ books.forEach(b=>{const m=String(b.price||"").match(/^\s*(?:NT\$?|\$)?\s*([\d,]+)\s*$/i);if(m){total+=+m[1].replace(/,/g,"");priced++}});
+ const day=t=>{const d=new Date(t);return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
+ const since=books.length?Math.min(...books.map(b=>b.date||Date.now())):0;
+ const feats=[["scan","掃描入庫","對準書背的 ISBN 條碼，書名、作者、定價與封面自動帶入；開啟快速入庫，可以一本接一本連續掃。"],
+  ["book","自動歸類","從書名判斷系列、集數與分類，同一套書自動排在一起；首刷限定版、特裝版也會標成版本。"],
+  ["refresh","跨裝置同步","iPhone、iPad、電腦填同一組同步密碼，書架會自動合併成同一份。"],
+  ["search","隨手查找","用書名、作者或 ISBN 搜尋，逛書店時先確認這本有沒有買過。"]];
+ app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1>
+  <p class="sub">${since?"從 "+day(since)+" 開始收藏":"還沒有收藏任何一本書"}</p></section>
+ <div class="mstats">
+  <div class="mstat"><div class="l">藏書量</div><div class="n">${books.length.toLocaleString()}<small>本</small></div></div>
+  <div class="mstat"><div class="l">系列數量</div><div class="n">${gs.length.toLocaleString()}<small>個</small></div><div class="d">多集系列 ${multi}・單本 ${gs.length-multi}</div></div>
+  <div class="mstat wide"><div class="l">總定價</div><div class="n">NT$ ${total.toLocaleString()}</div>
+   <div class="d">${priced?"平均每本 NT$ "+Math.round(total/priced).toLocaleString():"還沒有書標上定價"}${books.length>priced&&priced?"・另有 "+(books.length-priced)+" 本沒有定價，未計入":""}</div></div>
+ </div>
+ <section class="about"><div class="abhead"><img class="abicon" src="icon-192.png" alt=""><div><div class="abk">ABOUT</div><h2>把書架裝進口袋</h2></div></div>
+  <p class="abtxt">「我的書櫃」是為漫畫與小說收藏者做的個人藏書紀錄。掃一下書背就能入庫，資料和封面自動補齊，每一套書、每一集都整整齊齊排在架上；想知道收了多少、花了多少，打開這一頁就有答案。</p>
+  <div class="feats">${feats.map(([i,t,d])=>`<div class="feat"><span class="fi">${ic(i,20)}</span><div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>
+  <p class="abfoot">藏書資料存在這台裝置；開啟同步後，另存一份在你自己的 Cloudflare Worker。<br>從 Safari「加入主畫面」，就能像 App 一樣全螢幕使用。</p></section>`;
+}
+
 // ===== 設定 =====
 function settings(){
  setTitle("設定");
- setDock([backBtn(),homeBtn()]);
  const base=cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):""),mode=themeMode();
  app.innerHTML=`<div class="pane glass"><h2>外觀</h2><p class="sub">自動會跟隨手機的深色模式設定。</p>
  <div class="seg" id="seg">${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button data-th="${v}" class="${mode===v?"on":""}">${l}</button>`).join("")}</div></div>
@@ -950,7 +1041,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 setTimeout(vpCheck,100);
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
- const dk=e.target.closest("[data-dk]");if(dk){const f=dockActs[dk.dataset.dk];f&&f();return}
+ const dk=e.target.closest("[data-dk]");if(dk){const f=navActs[dk.dataset.dk]||dockActs[dk.dataset.dk];f&&f();return}
  const th=e.target.closest("[data-th]");if(th){setTheme(th.dataset.th);document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===th));return}
  if(e.target.closest("[data-undo]"))return undoLast();
  const rs=e.target.closest("[data-rnseries]");if(rs)return renameSeries(rs.dataset.rnseries);
