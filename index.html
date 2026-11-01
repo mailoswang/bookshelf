@@ -312,9 +312,31 @@ main.still>*{animation:none}
 @keyframes rot{to{transform:rotate(360deg)}}
 
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 84px + var(--kb,0px));transform:translateX(-50%);z-index:40;padding:10px 20px;border-radius:6px;font-size:.9rem;font-weight:600;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;animation:rise .25s ease both}
+.splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#141414;pointer-events:none;animation:spOut .45s cubic-bezier(.4,0,.2,1) 2.6s forwards}
+.splash.out{animation:spOut .45s cubic-bezier(.4,0,.2,1) forwards}
+.splash .sp{position:relative;display:grid;justify-items:center;gap:18px;transform:translateY(-4vh)}
+.splash svg{width:112px;height:auto;overflow:visible}
+.splash .glow{position:absolute;z-index:-1;left:50%;top:62px;width:240px;height:200px;margin:-100px 0 0 -120px;border-radius:50%;background:radial-gradient(closest-side,rgba(229,9,20,.35),transparent);opacity:0;animation:spGlow .9s ease .35s forwards}
+.splash .bk{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);animation:spUp .5s cubic-bezier(.3,1.25,.5,1) forwards}
+.splash .b2{animation-delay:.09s}.splash .b3{animation-delay:.18s}
+.splash .sh{transform-box:fill-box;transform-origin:50% 50%;transform:scaleX(0);animation:spLine .45s cubic-bezier(.6,0,.2,1) .3s forwards}
+.splash .nm{font-size:1.05rem;font-weight:700;letter-spacing:.32em;margin-right:-.32em;color:#e5e5e5;opacity:0;transform:translateY(6px);animation:spTxt .4s ease .5s forwards}
+@keyframes spUp{to{transform:scaleY(1)}}
+@keyframes spLine{to{transform:scaleX(1)}}
+@keyframes spGlow{to{opacity:1}}
+@keyframes spTxt{to{opacity:1;transform:none}}
+@keyframes spOut{to{opacity:0;transform:scale(1.12);visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.splash *{animation-duration:1ms!important;animation-delay:0s!important}}
 </style>
 </head>
 <body>
+<div class="splash" id="splash" aria-hidden="true"><div class="sp"><div class="glow"></div>
+<svg viewBox="0 0 120 104"><defs><linearGradient id="spg" x1="0" x2="1"><stop offset="0" stop-color="#b20710"/><stop offset=".5" stop-color="#e50914"/><stop offset="1" stop-color="#a0060e"/></linearGradient></defs>
+<rect class="bk b1" x="14" y="22" width="22" height="70" rx="3" fill="url(#spg)"/>
+<g class="bk b2"><rect x="41" y="6" width="27" height="86" rx="3" fill="url(#spg)"/><rect x="47" y="16" width="15" height="2.6" rx="1.3" fill="#fff" opacity=".7"/><rect x="47" y="22" width="15" height="2.6" rx="1.3" fill="#fff" opacity=".7"/></g>
+<g transform="rotate(12 98 92)"><rect class="bk b3" x="76" y="25" width="21" height="67" rx="3" fill="url(#spg)"/></g>
+<rect class="sh" x="4" y="95" width="112" height="4" rx="2" fill="#fff"/></svg>
+<div class="nm">我的書櫃</div></div></div>
 <main id="app"></main>
 <div class="edge2"></div>
 <nav class="dock glass" id="dock"></nav>
@@ -1100,7 +1122,8 @@ addEventListener("offline",()=>renderQ());
 addEventListener("hashchange",route);
 // 清除先前版本留下的離線快取與 Service Worker
 if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>{rs.forEach(r=>r.unregister());if(rs.length&&window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))}).catch(()=>{})}
-applyTheme();ensureK().finally(()=>{route();sync();setTimeout(fillPending,1500)});
+const hideSplash=()=>{const sp=$("#splash");if(!sp)return;setTimeout(()=>{sp.classList.add("out");setTimeout(()=>sp.remove(),500)},Math.max(0,1050-performance.now()))};
+applyTheme();ensureK().finally(()=>{route();hideSplash();sync();setTimeout(fillPending,1500)});
 </script>
 </body>
 </html>
