@@ -30,7 +30,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;--surf:#fff;
  --glass:rgba(255,255,255,.86);--solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;--pop:#fff;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.5);--lg-rim:rgba(255,255,255,.95);
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.5);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  color-scheme:light;
 }
@@ -38,7 +38,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;--surf:#1f1f1f;
  --glass:rgba(24,24,24,.82);--solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#ff5f57;--stk:#333;--pop:#1f1f1f;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.42);--lg-rim:rgba(255,255,255,.24);
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.42);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  color-scheme:dark;
 }
@@ -68,19 +68,26 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
  backdrop-filter:blur(12px) saturate(190%) brightness(1.04);-webkit-backdrop-filter:blur(12px) saturate(190%) brightness(1.04);
  box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
-.dock::before,.pacts::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+.dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
  background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.1) 28%,rgba(255,255,255,0) 50%,rgba(255,255,255,.08) 72%,rgba(255,255,255,.4));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .dock .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/4);z-index:-1;border-radius:999px;
  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 0 .5px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.18);
- transform:translateX(calc(var(--i,0)*100%));transition:transform .55s cubic-bezier(.3,1.4,.5,1),opacity .2s}
+ transform:translateX(calc(var(--i,0)*100%));transition:transform .5s cubic-bezier(.3,1.15,.45,1),opacity .2s;
+ transition:transform .55s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1),opacity .2s}
+.dock .ind.mv{animation:squish .5s ease}
+@keyframes squish{0%{scale:1}35%{scale:1.08 .94}100%{scale:1}}
 :root:not([data-theme="dark"]) .dock .ind{background:rgba(0,0,0,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.7)}
 .dock .ind.off{opacity:0}
 .nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border:0;padding:0;background:transparent;
  font:inherit;font-size:.68rem;font-weight:600;color:var(--sub);cursor:pointer;border-radius:999px;transition:color .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
 .nv .ic{width:23px;height:23px}
 .nv.on{color:var(--ink)}
-.nv:active{transform:scale(.88)}
+.nv{transition:color .2s,transform .4s cubic-bezier(.34,1.3,.5,1)}
+.nv{transition:color .2s,transform .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
+.nv:active{transform:scale(.92);transition:transform .12s ease-out}
+.nv.on>.ic,.nv.on>.av{animation:nvpop .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
+@keyframes nvpop{0%{scale:.85}100%{scale:1}}
 .nv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .av{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(160deg,#ff3b44,#b20710);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 6px rgba(229,9,20,.3);transition:opacity .2s}
 .nv:not(.on) .av{opacity:.7}
@@ -112,7 +119,7 @@ main{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));overflow-y:a
 main>*{animation:rise .4s ease both}
 main>*:nth-child(2){animation-delay:.04s}main>*:nth-child(3){animation-delay:.08s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.nv,.card,.dock .ind{transition:none}}
+@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.nv,.card,.dock .ind{transition:none}.dock .ind.mv,.nv.on>.ic,.nv.on>.av{animation:none}}
 
 /* buttons / fields */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:700;font-size:.95rem;color:var(--ink);cursor:pointer;padding:10px 18px;border-radius:6px;border:1px solid var(--line);background:var(--solid)}
@@ -167,11 +174,6 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .hacts .btn{min-width:120px}
 .hero.sh{padding-bottom:10px}
 
-.stats{display:flex;justify-content:center;gap:22px;margin:4px 0 18px;color:var(--sub);font-size:.8rem}
-.stat{text-align:center}
-.stat .n{white-space:nowrap;font-size:1.3rem;font-weight:800;line-height:1.1;color:var(--ink)}
-.stat .n small{font-size:.75rem;font-weight:600;color:var(--sub);margin-right:3px}
-.stat .l{margin-top:2px}
 .tools{display:flex;gap:10px;margin-bottom:6px;align-items:center}
 .search{flex:1;display:flex;align-items:center;gap:8px;border-radius:6px;padding:0 14px;height:46px;color:var(--sub);background:var(--solid);border:1px solid var(--line)}
 .search input{border:0;background:transparent;padding:0;height:100%;box-shadow:none!important;border-radius:0}
@@ -222,6 +224,13 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .dl dd{margin:0;font-size:.95rem;overflow-wrap:anywhere}
 .lnk{cursor:pointer;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
 main.still>*{animation:none}
+/* 換頁動畫：整頁淡入淡出（導航列兩頁相同，看起來不動），點到的封面飛到下一頁的大看板 */
+::view-transition-old(root){animation:vt-fade .26s ease both}
+::view-transition-new(root){animation:vt-fade .32s ease reverse both}
+@keyframes vt-fade{to{opacity:0}}
+::view-transition-group(bookcv){z-index:60;animation-duration:.52s;animation-timing-function:cubic-bezier(.3,1.18,.4,1)}
+::view-transition-old(bookcv),::view-transition-new(bookcv){height:100%;object-fit:cover;animation-duration:.52s}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
 
 /* 我的書櫃 */
 .mehead{text-align:center;padding:14px 0 4px}
@@ -266,14 +275,22 @@ main.still>*{animation:none}
 
 /* 對話框 */
 .dlg{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:24px}
-.dlg-b{position:absolute;inset:0;background:rgba(0,0,0,.6);animation:fade .2s ease both}
-.dlg-p{position:relative;width:min(100%,340px);border-radius:12px;padding:24px 20px 18px;text-align:center;background:var(--pop);animation:pop .25s cubic-bezier(.2,.9,.3,1.1) both}
+.dlg-b{position:absolute;inset:0;background:rgba(0,0,0,.38);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%);animation:fade .25s ease both}
+.dlg-p{position:relative;width:min(100%,340px);border-radius:26px;padding:24px 20px 18px;text-align:center;animation:pop .42s cubic-bezier(.3,1.35,.5,1) both}
+.dlg-p.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.03) 40%,rgba(255,255,255,.05)),var(--lg-bg2);
+ backdrop-filter:blur(26px) saturate(190%) brightness(1.04);-webkit-backdrop-filter:blur(26px) saturate(190%) brightness(1.04);
+ box-shadow:0 24px 60px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 30px rgba(255,255,255,.05)}
+.dlg-a .btn{border-radius:999px;border:0;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+:root:not([data-theme="dark"]) .dlg-a .btn{background:rgba(0,0,0,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+.dlg-a .btn.pri{background:var(--acc);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 6px 16px rgba(229,9,20,.35)}
+.dlg-a .btn.pri.dng{background:var(--danger)}
+.dlg .dlg-i{border-radius:12px}
 .dlg-t{font-size:1.1rem;font-weight:800}
 .dlg-m{margin-top:8px;font-size:.92rem;color:var(--sub);line-height:1.6}
 .dlg-i{margin-top:16px;text-align:center}
 .dlg-a{display:flex;gap:10px;margin-top:22px}.dlg-a .btn{flex:1;padding:12px 10px}.dlg-a.col{flex-direction:column}
 .dlg.out{animation:fadeout .17s ease forwards}
-@keyframes fade{from{opacity:0}}@keyframes fadeout{to{opacity:0}}@keyframes pop{from{opacity:0;transform:scale(.94) translateY(8px)}}
+@keyframes fade{from{opacity:0}}@keyframes fadeout{to{opacity:0}}@keyframes pop{from{opacity:0;transform:scale(.86) translateY(10px)}}
 
 /* edit */
 .editgrid{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:start}
@@ -441,7 +458,7 @@ const AV=`<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><re
 function renderNav(){
  const el=$("#dock"),h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h);
  const cur=h==="#/"||h==="#"||sub?0:h.startsWith("#/add")?1:h.startsWith("#/settings")?2:h.startsWith("#/me")?3:-1;
- const items=[{id:"home",icon:"home",label:"首頁",fn:()=>{draft=null;go("#/")}},
+ const items=[{id:"home",icon:"home",label:"首頁",fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
   sub?{id:"back",icon:"back",label:"回上頁",fn:goBack}:{id:"scan",icon:"scan",label:"入庫",fn:()=>{sess=[];go("#/add")}},
   {id:"cfg",icon:"sliders",label:"設定",fn:()=>go("#/settings")},
   {id:"me",label:"我的書櫃",av:true,fn:()=>go("#/me")}];
@@ -450,7 +467,9 @@ function renderNav(){
  el.querySelectorAll(".nv").forEach((b,i)=>{const a=items[i];
   if(b.dataset.dk!==a.id){b.dataset.dk=a.id;b.setAttribute("aria-label",a.label);b.innerHTML=(a.av?`<span class="av">${AV}</span>`:ic(a.icon,25))+`<span>${a.label}</span>`}
   b.classList.toggle("on",i===cur);if(i===cur)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- const ind=el.querySelector(".ind");ind.classList.toggle("off",cur<0);if(cur>=0)ind.style.setProperty("--i",cur);
+ const ind=el.querySelector(".ind");ind.classList.toggle("off",cur<0);
+ if(cur>=0&&ind.style.getPropertyValue("--i")!==String(cur)){const moved=ind.style.getPropertyValue("--i")!=="";ind.style.setProperty("--i",cur);
+  if(moved){ind.classList.remove("mv");void ind.offsetWidth;ind.classList.add("mv")}}
 }
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
@@ -471,7 +490,32 @@ function parentOf(){const h=location.hash;
  return"#/"}
 function goBack(){if(draft&&location.hash.startsWith("#/edit"))draft=null;if(hist.length>1)history.back();else go(parentOf())}
 function stopScan(){clearTimeout(timer);timer=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+// 換頁：支援 View Transitions 的瀏覽器（Safari 18+、Chrome）加上轉場動畫，其他照舊直接切換
+let cvSrc=null,booted=false,navTap=false;
+const inView=e=>{const r=e.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth};
 function route(){
+ const raw=location.hash&&location.hash!=="#"?location.hash:"#/",prev=hist[hist.length-1];
+ const src=cvSrc;cvSrc=null;
+ if(navTap){navTap=false;booted=true;render();app.classList.add("still");return}
+ if(!booted||raw===prev||!document.startViewTransition||matchMedia("(prefers-reduced-motion: reduce)").matches){booted=true;return render()}
+ const back=(hist.length>1&&hist[hist.length-2]===raw)||raw==="#/";
+ // 封面：往前＝點到的那張；往回＝目前大看板上的那張
+ const from=back?$(".hero.sh .hcv .cover"):src;
+ if(from)from.style.viewTransitionName="bookcv";
+ let done=false;
+ const vt=document.startViewTransition(()=>{
+  done=true;render();
+  if(!back)app.classList.remove("still");
+  if(!from)return;
+  const to=back?[...app.querySelectorAll(`[data-go="${CSS.escape(prev)}"] .cover`)].find(inView):$(".hero.sh .hcv .cover");
+  if(to)to.style.viewTransitionName="bookcv";
+ });
+ // 保險：新頁 0.5 秒內還沒畫出來，就跳過動畫直接換頁，畫面不會卡住
+ setTimeout(()=>{if(!done)vt.skipTransition()},500);
+ vt.ready.catch(()=>{});
+ vt.finished.finally(()=>document.querySelectorAll(".cover").forEach(e=>{if(e.style.viewTransitionName)e.style.viewTransitionName=""}));
+}
+function render(){
  stopScan();scanDockFn=null;setActs(null);renderNav();
  const raw=location.hash||"#/",h=raw.slice(1)||"/",p=h.split("/");
  trackHash(raw==="#"?"#/":raw);
@@ -538,15 +582,10 @@ function renderGrid(){
 function shelf(){
  setTitle("我的書櫃");
  if(!books.length){app.innerHTML=`<div class="empty glass">${ic("book",44)}書架還是空的<br>點擊下方「掃描入庫」，<br>掃描書背的 ISBN 條碼，開始收藏第一本書。</div>`;return}
- const total=sumPrice(books).total;
  const pend=books.filter(b=>b.pending||b.refill).length;
  const gs=groups().sort((a,b)=>b.last-a.last);
  const feat=gs.find(x=>x.k===heroK)||gs.find(x=>x.first.cover)||gs.find(x=>autoCover(x.first))||gs[0];heroK=feat.k;
- app.innerHTML=hero(feat)+`<div class="stats">
-  <div class="stat"><div class="n">${gs.length}</div><div class="l">系列</div></div>
-  <div class="stat"><div class="n">${books.length}</div><div class="l">藏書（本）</div></div>
-  ${total?`<div class="stat"><div class="n">${total>=10000?(total/10000).toFixed(total>=100000?0:1)+"<small style=\"margin:0 0 0 2px\">萬</small>":money(total)}</div><div class="l">總定價（NT$）</div></div>`:""}
- </div>
+ app.innerHTML=hero(feat)+`<div style="height:18px"></div>
  ${pend?`<div style="margin-bottom:12px;text-align:center"><button class="chip warn" id="pend">${ic("refresh",15)}${pend} 本待補資料，點此重新查詢</button></div>`:""}
  <div class="tools"><label class="search" style="margin:0">${ic("search",18)}<input id="q" type="search" placeholder="搜尋書名、作者、ISBN" value="${esc(query)}" enterkeyhint="search"></label></div>
  <div id="rows"></div>
@@ -948,18 +987,17 @@ function me(){
  const gs=groups(),multi=gs.filter(x=>x.l.length>1).length;
  const {total,priced}=sumPrice(books);
  const day=t=>{const d=new Date(t);return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
- const since=books.length?Math.min(...books.map(b=>b.date||Date.now())):0;
  const feats=[["scan","掃描入庫","對準書背的 ISBN 條碼，書名、作者、定價與封面自動帶入；開啟快速入庫，可以一本接一本連續掃。"],
   ["book","自動歸類","從書名判斷系列、集數與分類，同一套書自動排在一起；首刷限定版、特裝版也會標成版本。"],
   ["refresh","跨裝置同步","iPhone、iPad、電腦填同一組同步密碼，書架會自動合併成同一份。"],
   ["search","隨手查找","用書名、作者或 ISBN 搜尋，逛書店時先確認這本有沒有買過。"]];
  app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1>
-  <p class="sub">${since?"從 "+day(since)+" 開始收藏":"還沒有收藏任何一本書"}</p></section>
+</section>
  <div class="mstats">
   <div class="mstat"><div class="l">藏書量</div><div class="n">${books.length.toLocaleString()}<small>本</small></div></div>
   <div class="mstat"><div class="l">系列數量</div><div class="n">${gs.length.toLocaleString()}<small>個</small></div><div class="d">多集系列 ${multi}・單本 ${gs.length-multi}</div></div>
-  <div class="mstat wide"><div class="l">總定價</div><div class="n">NT$ ${money(total)}</div>
-   <div class="d">${priced?"平均每本 NT$ "+money(Math.round(total/priced*100)/100):"還沒有書標上定價"}${books.length>priced&&priced?"・另有 "+(books.length-priced)+" 本沒有定價，未計入":""}</div></div>
+  <div class="mstat wide"><div class="l">總定價</div><div class="n">NT$ ${money(Math.round(total))}</div>
+   <div class="d">${priced?"平均每本 NT$ "+money(Math.round(total/priced)):"還沒有書標上定價"}${books.length>priced&&priced?"・另有 "+(books.length-priced)+" 本沒有定價，未計入":""}</div></div>
  </div>
  <section class="about"><div class="abhead"><img class="abicon" src="icon-192.png" alt=""><div><div class="abk">ABOUT</div><h2>把書架裝進口袋</h2></div></div>
   <p class="abtxt">「我的書櫃」是為漫畫與小說收藏者做的個人藏書紀錄。掃一下書背就能入庫，資料和封面自動補齊，每一套書、每一集都整整齊齊排在架上；想知道收了多少、花了多少，打開這一頁就有答案。</p>
@@ -1045,13 +1083,13 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 setTimeout(vpCheck,100);
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
- const dk=e.target.closest("[data-dk]");if(dk){const f=navActs[dk.dataset.dk]||dockActs[dk.dataset.dk];f&&f();return}
+ const dk=e.target.closest("[data-dk]");if(dk){const nf=navActs[dk.dataset.dk],f=nf||dockActs[dk.dataset.dk];navTap=!!nf;f&&f();return}
  const th=e.target.closest("[data-th]");if(th){setTheme(th.dataset.th);document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===th));return}
  if(e.target.closest("[data-undo]"))return undoLast();
  const rs=e.target.closest("[data-rnseries]");if(rs)return renameSeries(rs.dataset.rnseries);
  const rc=e.target.closest("[data-rncat]");if(rc)return renameCat(rc.dataset.sk,rc.dataset.rncat);
  const tg=e.target.closest("[data-tog]");if(tg){const k=tg.dataset.tog;openCats.has(k)?openCats.delete(k):openCats.add(k);return route()}
- const c=e.target.closest("[data-go]");if(c)go(c.dataset.go);
+ const c=e.target.closest("[data-go]");if(c){navTap=false;cvSrc=c.querySelector(".cover");go(c.dataset.go)}
 });
 // 虛擬鍵盤出現時，讓底部懸浮列浮在鍵盤上方
 if(window.visualViewport){const upd=()=>{const vv=visualViewport,ae=document.activeElement,typing=ae&&/^(INPUT|TEXTAREA)$/.test(ae.tagName);const d=innerHeight-vv.height-vv.offsetTop;document.documentElement.style.setProperty("--kb",(typing&&d>150?d:0)+"px")};visualViewport.addEventListener("resize",upd);visualViewport.addEventListener("scroll",upd);addEventListener("focusout",()=>setTimeout(upd,50))}
