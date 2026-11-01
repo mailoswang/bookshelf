@@ -96,10 +96,11 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock.err [data-dk="cfg"]::after{background:var(--acc)}
 /* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
 .pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 78px + var(--kb,0px));z-index:29;
- display:flex;gap:6px;padding:5px;border-radius:999px;max-width:calc(100% - 20px);animation:none!important;
+ width:min(calc(100% - 64px),360px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important;
  background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),var(--lg-bg);backdrop-filter:blur(12px) saturate(190%);-webkit-backdrop-filter:blur(12px) saturate(190%);
  box-shadow:0 10px 26px rgba(0,0,0,.4),inset 0 1px 0 var(--lg-rim)}
-.pacts .btn{border-radius:999px;border:0;background:transparent;padding:10px 16px;white-space:nowrap}
+.pacts .btn{flex:1 1 0;min-width:0;justify-content:center;gap:6px;border-radius:999px;border:0;background:transparent;padding:11px 6px;font-size:.9rem;white-space:nowrap}
+.pacts .btn span{overflow:hidden;text-overflow:ellipsis}
 .pacts .btn.pri{background:var(--acc)}
 .pacts .btn.on{color:var(--acc);background:color-mix(in srgb,var(--acc) 16%,transparent)}
 .pacts .btn.dng{color:var(--danger)}
@@ -224,13 +225,8 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .dl dd{margin:0;font-size:.95rem;overflow-wrap:anywhere}
 .lnk{cursor:pointer;text-decoration:underline;text-decoration-color:var(--acc);text-underline-offset:3px}
 main.still>*{animation:none}
-/* 換頁動畫：整頁淡入淡出（導航列兩頁相同，看起來不動），點到的封面飛到下一頁的大看板 */
-::view-transition-old(root){animation:vt-fade .26s ease both}
-::view-transition-new(root){animation:vt-fade .32s ease reverse both}
-@keyframes vt-fade{to{opacity:0}}
-::view-transition-group(bookcv){z-index:60;animation-duration:.52s;animation-timing-function:cubic-bezier(.3,1.18,.4,1)}
-::view-transition-old(bookcv),::view-transition-new(bookcv){height:100%;object-fit:cover;animation-duration:.52s}
-@media (prefers-reduced-motion:reduce){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
+/* 換頁時飛行的封面（複製一張浮在頁面上，頁面本身保持即時，導航欄的模糊不會中斷）*/
+.ghost{position:fixed;z-index:25;margin:0;pointer-events:none;transform-origin:0 0;will-change:transform}
 
 /* 我的書櫃 */
 .mehead{text-align:center;padding:14px 0 4px}
@@ -490,30 +486,32 @@ function parentOf(){const h=location.hash;
  return"#/"}
 function goBack(){if(draft&&location.hash.startsWith("#/edit"))draft=null;if(hist.length>1)history.back();else go(parentOf())}
 function stopScan(){clearTimeout(timer);timer=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
-// 換頁：支援 View Transitions 的瀏覽器（Safari 18+、Chrome）加上轉場動畫，其他照舊直接切換
-let cvSrc=null,booted=false,navTap=false;
-const inView=e=>{const r=e.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth};
+// 換頁：點封面進入時，封面飛到下一頁的大看板；返回時飛回書架原本的位置。點導航欄（回上頁除外）直接切換
+let cvSrc=null,booted=false,navTap=false,flight=null;
+const inView=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth};
 function route(){
  const raw=location.hash&&location.hash!=="#"?location.hash:"#/",prev=hist[hist.length-1];
  const src=cvSrc;cvSrc=null;
+ if(flight){flight();flight=null}
  if(navTap){navTap=false;booted=true;render();app.classList.add("still");return}
- if(!booted||raw===prev||!document.startViewTransition||matchMedia("(prefers-reduced-motion: reduce)").matches){booted=true;return render()}
+ if(!booted||raw===prev||matchMedia("(prefers-reduced-motion: reduce)").matches){booted=true;return render()}
  const back=(hist.length>1&&hist[hist.length-2]===raw)||raw==="#/";
- // 封面：往前＝點到的那張；往回＝目前大看板上的那張
  const from=back?$(".hero.sh .hcv .cover"):src;
- if(from)from.style.viewTransitionName="bookcv";
- let done=false;
- const vt=document.startViewTransition(()=>{
-  done=true;render();
-  if(!back)app.classList.remove("still");
-  if(!from)return;
-  const to=back?[...app.querySelectorAll(`[data-go="${CSS.escape(prev)}"] .cover`)].find(inView):$(".hero.sh .hcv .cover");
-  if(to)to.style.viewTransitionName="bookcv";
- });
- // 保險：新頁 0.5 秒內還沒畫出來，就跳過動畫直接換頁，畫面不會卡住
- setTimeout(()=>{if(!done)vt.skipTransition()},500);
- vt.ready.catch(()=>{});
- vt.finished.finally(()=>document.querySelectorAll(".cover").forEach(e=>{if(e.style.viewTransitionName)e.style.viewTransitionName=""}));
+ const r0=from&&inView(from)?from.getBoundingClientRect():null,ghost=r0?from.cloneNode(true):null;
+ render();app.classList.add("still");
+ app.animate([{opacity:0},{opacity:1}],{duration:260,easing:"ease-out"});
+ if(!ghost)return;
+ const to=back?[...app.querySelectorAll(`[data-go="${CSS.escape(prev)}"] .cover`)].find(inView):$(".hero.sh .hcv .cover");
+ if(!to)return;
+ const r1=to.getBoundingClientRect();
+ ghost.classList.add("ghost");ghost.removeAttribute("id");
+ Object.assign(ghost.style,{left:r0.left+"px",top:r0.top+"px",width:r0.width+"px",height:r0.height+"px",aspectRatio:"auto"});
+ document.body.appendChild(ghost);to.style.visibility="hidden";
+ const anim=ghost.animate([{transform:"none"},{transform:`translate(${r1.left-r0.left}px,${r1.top-r0.top}px) scale(${r1.width/r0.width},${r1.height/r0.height})`}],
+  {duration:500,easing:"cubic-bezier(.3,1.12,.4,1)",fill:"forwards"});
+ const end=()=>{to.style.visibility="";ghost.remove();if(flight===end)flight=null};
+ // 動畫結束就收尾；萬一結束通知沒來，0.7 秒後也一定收尾，封面不會一直藏著
+ flight=end;anim.finished.then(end,end);setTimeout(end,700);
 }
 function render(){
  stopScan();scanDockFn=null;setActs(null);renderNav();
