@@ -56,12 +56,9 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .pane.glass{background:var(--surf);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
 
 /* 底部懸浮列 */
-.edge{position:fixed;left:0;right:0;bottom:0;height:145px;z-index:20;pointer-events:none;
- -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
- -webkit-mask-image:linear-gradient(to top,#000 0%,#000 20%,transparent 100%);mask-image:linear-gradient(to top,#000 0%,#000 20%,transparent 100%)}
-.edge2{position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none;
- background:linear-gradient(to top,color-mix(in srgb,var(--bg1) 92%,transparent) 0%,color-mix(in srgb,var(--bg1) 45%,transparent) 50%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
-.short .edge2{background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
+/* 頁面上下直接鋪滿，不做模糊或淡化；只有主畫面模式可視高度不足時（.short），底部補一條實色 */
+.edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
+.short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
  width:min(calc(100% - 64px),360px);height:62px;padding:4px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate}
@@ -164,7 +161,7 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .hbg .cover{width:100%;height:100%;aspect-ratio:auto;border-radius:0;box-shadow:none}
 .hbg .ph{display:none}
 .hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
- background:linear-gradient(to bottom,color-mix(in srgb,var(--bg1) 35%,transparent) 0%,color-mix(in srgb,var(--bg1) 10%,transparent) 30%,color-mix(in srgb,var(--bg1) 70%,transparent) 70%,var(--bg1) 100%)}
+ background:linear-gradient(to bottom,transparent 0%,transparent 40%,color-mix(in srgb,var(--bg1) 70%,transparent) 70%,var(--bg1) 100%)}
 .hcv{width:min(46vw,200px);cursor:pointer}
 .hcv .cover{border-radius:6px;box-shadow:0 22px 50px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.35)}
 .hk{margin-top:18px;font-size:.74rem;font-weight:800;letter-spacing:.24em;color:var(--acc)}
@@ -319,7 +316,7 @@ main.still>*{animation:none}
 </head>
 <body>
 <main id="app"></main>
-<div class="edge"></div><div class="edge2"></div>
+<div class="edge2"></div>
 <nav class="dock glass" id="dock"></nav>
 <script>
 // ===== 設定 =====
