@@ -290,7 +290,7 @@ main.still>*{animation:none}
 .editgrid .cvcol .cv{margin:0}
 @media(max-width:600px){.editgrid{grid-template-columns:1fr}.cvcol{width:150px;margin:0 auto}}
 .irow{display:flex;gap:8px;align-items:center}
-.ib.busy svg{animation:rot .8s linear infinite}
+.ib.busy svg,.btn.busy svg{animation:rot .8s linear infinite}
 
 /* scan */
 .scan{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:4/3;box-shadow:var(--shadow)}
@@ -1013,6 +1013,8 @@ function settings(){
  <p class="msg" id="s_msg">${esc(statusText())}</p></div>
  <div class="pane glass"><h2>備份</h2><p class="sub">把藏書（含封面）存成檔案，或從備份檔還原。還原時只會加入較新或不存在的書。</p>
  <div class="acts"><button class="btn" id="x_out">${ic("download",18)}匯出備份</button><button class="btn" id="x_in">${ic("upload",18)}匯入還原</button></div><input type="file" id="x_f" accept="application/json,.json" hidden></div>
+ <div class="pane glass"><h2>重新整理</h2><p class="sub">重新載入整個 App，抓取網站最新版本。從主畫面開啟時沒有瀏覽器的重新整理鍵，可以用這裡。</p>
+ <div class="acts"><button class="btn" id="x_reload">${ic("refresh",18)}重新整理</button></div></div>
 `;
  $("#s_go").onclick=async()=>{
   const url=$("#s_url").value.trim().replace(/\?.*$/,"").replace(/\/+$/,""),tok=$("#s_tok").value.trim();
@@ -1022,6 +1024,9 @@ function settings(){
   await sync();$("#s_msg")&&($("#s_msg").textContent=statusText());
  };
  $("#s_off").onclick=()=>{cfg={};saveCfg();setSync("ok");$("#s_url").value="";$("#s_tok").value="";$("#s_msg").textContent="已停用同步（本機資料保留）。"};
+ // 先略過快取重抓一次頁面，再重新載入，才會拿到剛發布的新版
+ $("#x_reload").onclick=async()=>{const b=$("#x_reload");b.disabled=true;b.classList.add("busy");
+  try{await tmo(location.href.split("#")[0],{cache:"reload"},8000)}catch(e){}location.reload()};
  $("#x_out").onclick=()=>{
   const blob=new Blob([JSON.stringify({v:1,books,tombs})],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="bookshelf-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();
