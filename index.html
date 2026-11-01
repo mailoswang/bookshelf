@@ -1083,7 +1083,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 setTimeout(vpCheck,100);
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
- const dk=e.target.closest("[data-dk]");if(dk){const nf=navActs[dk.dataset.dk],f=nf||dockActs[dk.dataset.dk];navTap=!!nf;f&&f();return}
+ const dk=e.target.closest("[data-dk]");if(dk){const nf=navActs[dk.dataset.dk],f=nf||dockActs[dk.dataset.dk];navTap=!!nf&&dk.dataset.dk!=="back";f&&f();return}
  const th=e.target.closest("[data-th]");if(th){setTheme(th.dataset.th);document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===th));return}
  if(e.target.closest("[data-undo]"))return undoLast();
  const rs=e.target.closest("[data-rnseries]");if(rs)return renameSeries(rs.dataset.rnseries);
