@@ -62,7 +62,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
  width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:scale .4s cubic-bezier(.3,1.4,.5,1)}
+ touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:scale .32s cubic-bezier(.45,0,.2,1);will-change:scale}
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
  backdrop-filter:blur(6px) saturate(180%) brightness(1.04);-webkit-backdrop-filter:blur(6px) saturate(180%) brightness(1.04);
  box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
@@ -72,16 +72,15 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/4);z-index:-1;border-radius:999px;
  background:var(--nav-ind);box-shadow:inset 0 1px 2px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.06);
  translate:calc(var(--i,0)*100%) 0;
- transition:translate .45s cubic-bezier(.25,1,.35,1),opacity .2s,
-  scale .4s cubic-bezier(.3,1.4,.5,1),background .25s,box-shadow .25s}
+ transition:translate .4s cubic-bezier(.45,0,.2,1),opacity .2s,scale .32s cubic-bezier(.45,0,.2,1),background .25s cubic-bezier(.45,0,.2,1),box-shadow .25s cubic-bezier(.45,0,.2,1);will-change:translate,scale}
 /* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
 .dock.lift{scale:1.04}
-.dock.lift .ind{scale:1.1 1.32;background:rgba(255,255,255,.07);
+.dock.lift .ind{scale:1.18 1.32;background:rgba(255,255,255,.07);
  box-shadow:inset 0 0 0 1px rgba(255,255,255,.42),inset 0 1.5px 0 rgba(255,255,255,.75),inset 0 -1px 0 rgba(255,255,255,.2),0 8px 20px rgba(0,0,0,.28)}
-.dock.drag .ind{transition:translate .18s cubic-bezier(.25,1,.35,1),scale .4s cubic-bezier(.3,1.4,.5,1),background .25s,box-shadow .25s}
+.dock.follow .ind{transition:scale .32s cubic-bezier(.45,0,.2,1),background .25s cubic-bezier(.45,0,.2,1),box-shadow .25s cubic-bezier(.45,0,.2,1)}
 .dock.drag .nv{color:var(--ink)}
 .dock.drag .nv.hov{color:var(--nav-on)}
-.dock .ind.mv{animation:squish .5s ease}
+.dock .ind.mv{animation:squish .45s ease-in-out}
 @keyframes squish{0%{scale:1}35%{scale:1.08 .94}100%{scale:1}}
 :root:not([data-theme="dark"]) .dock .ind{box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
 .dock .ind.off{opacity:0}
@@ -1117,23 +1116,24 @@ addEventListener("resize",()=>setTimeout(vpCheck,100));
 addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
 setTimeout(vpCheck,100);
-// 導航欄手勢：按下時膠囊浮起成玻璃塊；按住任一格，膠囊會移到那格中央並可左右拖動，經過哪格就變紅，鬆手才切換
-(function(){const el=$("#dock");let st=null,skip=false;
- const slot=()=>(el.offsetWidth-10)/4;
- const put=px=>{const w=slot();px=Math.max(0,Math.min(3*w,px));const k=Math.round(px/w);
-  st.ind.style.translate=`${px}px 0`;st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))};
- const startDrag=()=>{if(!st||st.drag)return;st.drag=true;st.x0=st.x;el.classList.add("drag");try{el.setPointerCapture(st.id)}catch(e){}put(st.i*slot())};
- const done=ok=>{if(!st)return;const s=st;st=null;clearTimeout(s.hold);
-  if(s.drag){skip=true;setTimeout(()=>skip=false,0);s.nvs.forEach(b=>b.classList.remove("hov"));
-   s.ind.style.removeProperty("translate");el.classList.remove("drag");s.ind.style.setProperty("--i",s.k);
-   if(ok&&s.k!==s.cur){const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}else if(s.cur>=0)s.ind.style.setProperty("--i",s.cur)}
-  setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(120,320-(performance.now()-s.t0)))};
+// 導航欄手勢：一按下膠囊就浮起成玻璃塊、快速移到按住的那格；按住可左右拖動，經過哪格就變紅，鬆手才切換
+(function(){const el=$("#dock");let st=null,skip=false,raf=0;
+ const put=px=>{px=Math.max(0,Math.min(3*st.w,px));const k=Math.round(px/st.w);
+  st.ind.style.translate=`${px}px 0`;if(k!==st.k){st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))}};
+ const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
+  skip=true;setTimeout(()=>skip=false,0);
+  s.nvs.forEach(b=>b.classList.remove("hov"));s.ind.style.removeProperty("translate");el.classList.remove("drag","follow");
+  if(ok&&s.k!==s.cur){s.ind.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
+  else{if(s.cur>=0)s.ind.style.setProperty("--i",s.cur);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
+  setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)))};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
-  const nvs=[...el.querySelectorAll(".nv")];
-  st={id:e.pointerId,x0:e.clientX,x:e.clientX,i:nvs.indexOf(b),cur:nvs.findIndex(n=>n.classList.contains("on")),drag:false,t0:performance.now(),ind:el.querySelector(".ind"),nvs,hold:setTimeout(startDrag,260)};
-  st.k=st.i;el.classList.add("lift")});
- el.addEventListener("pointermove",e=>{if(!st||e.pointerId!==st.id)return;st.x=e.clientX;
-  if(st.drag)put(st.i*slot()+st.x-st.x0);else if(Math.abs(st.x-st.x0)>8)startDrag()});
+  const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
+  st={id:e.pointerId,x0:e.clientX,i,k:-1,moved:false,w:(el.offsetWidth-10)/4,cur:nvs.findIndex(n=>n.classList.contains("on")),t0:performance.now(),ind:el.querySelector(".ind"),nvs};
+  try{el.setPointerCapture(e.pointerId)}catch(_){}
+  el.classList.add("lift","drag");put(i*st.w)});
+ el.addEventListener("pointermove",e=>{if(!st||e.pointerId!==st.id)return;const x=e.clientX;
+  if(!st.moved){if(Math.abs(x-st.x0)<6)return;st.moved=true;el.classList.add("follow")}
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(st)put(st.i*st.w+x-st.x0)})});
  el.addEventListener("pointerup",e=>{if(st&&e.pointerId===st.id)done(true)});
  el.addEventListener("pointercancel",e=>{if(st&&e.pointerId===st.id)done(false)});
  el.addEventListener("click",e=>{if(skip){skip=false;e.stopPropagation();e.preventDefault()}},true);
