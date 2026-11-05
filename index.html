@@ -62,7 +62,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
  width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:scale .32s cubic-bezier(.45,0,.2,1);will-change:scale}
+ touch-action:none;transition:scale .32s cubic-bezier(.45,0,.2,1);will-change:scale}
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
  backdrop-filter:blur(6px) saturate(180%) brightness(1.04);-webkit-backdrop-filter:blur(6px) saturate(180%) brightness(1.04);
  box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
@@ -116,6 +116,10 @@ main.acts-on{padding-bottom:calc(184px + env(safe-area-inset-bottom,0px))}
 @keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
 
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+/* 像原生 App：長按不選字、不跳出複製選單或圖片／連結預覽（輸入框除外） */
+*{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img,svg,a{-webkit-user-drag:none;user-drag:none}
 body{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));width:100%}
 main{position:fixed;top:0;left:0;right:0;bottom:calc(-1*var(--gap));overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
  padding:calc(env(safe-area-inset-top,0px) + 22px) max(14px,calc((100% - 1080px)/2)) calc(124px + env(safe-area-inset-bottom,0px))}
@@ -1138,6 +1142,9 @@ setTimeout(vpCheck,100);
  el.addEventListener("pointercancel",e=>{if(st&&e.pointerId===st.id)done(false)});
  el.addEventListener("click",e=>{if(skip){skip=false;e.stopPropagation();e.preventDefault()}},true);
 })();
+// 長按不跳出瀏覽器選單、圖片不能拖出去（輸入框照常）
+document.addEventListener("contextmenu",e=>{if(!e.target.closest("input,textarea,select,[contenteditable]"))e.preventDefault()});
+document.addEventListener("dragstart",e=>{if(!e.target.closest("input,textarea"))e.preventDefault()});
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
  const dk=e.target.closest("[data-dk]");if(dk){const nf=navActs[dk.dataset.dk],f=nf||dockActs[dk.dataset.dk];navTap=!!nf&&dk.dataset.dk!=="back";f&&f();return}
