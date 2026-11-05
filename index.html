@@ -30,7 +30,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;--surf:#fff;
  --glass:rgba(255,255,255,.86);--solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;--pop:#fff;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.5);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.36);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  color-scheme:light;
 }
@@ -38,7 +38,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;--surf:#1f1f1f;
  --glass:rgba(24,24,24,.82);--solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#ff5f57;--stk:#333;--pop:#1f1f1f;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.42);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.26);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  color-scheme:dark;
 }
@@ -63,7 +63,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
  width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate}
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
- backdrop-filter:blur(12px) saturate(190%) brightness(1.04);-webkit-backdrop-filter:blur(12px) saturate(190%) brightness(1.04);
+ backdrop-filter:blur(6px) saturate(180%) brightness(1.04);-webkit-backdrop-filter:blur(6px) saturate(180%) brightness(1.04);
  box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
 .dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
  background:linear-gradient(135deg,rgba(255,255,255,.6),rgba(255,255,255,.1) 28%,rgba(255,255,255,0) 50%,rgba(255,255,255,.08) 72%,rgba(255,255,255,.4));
@@ -92,7 +92,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
 .pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 80px + var(--kb,0px));z-index:29;
  width:min(calc(100% - 40px),390px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important;
- background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),var(--lg-bg);backdrop-filter:blur(12px) saturate(190%);-webkit-backdrop-filter:blur(12px) saturate(190%);
+ background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.03)),var(--lg-bg);backdrop-filter:blur(6px) saturate(180%);-webkit-backdrop-filter:blur(6px) saturate(180%);
  box-shadow:0 10px 26px rgba(0,0,0,.4),inset 0 1px 0 var(--lg-rim)}
 .pacts .btn{flex:1 1 0;min-width:0;justify-content:center;gap:6px;border-radius:999px;border:0;background:transparent;padding:11px 6px;font-size:.9rem;white-space:nowrap}
 .pacts .btn span{overflow:hidden;text-overflow:ellipsis}
