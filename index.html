@@ -61,7 +61,8 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
- width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate}
+ width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
+ touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:scale .4s cubic-bezier(.3,1.4,.5,1)}
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
  backdrop-filter:blur(6px) saturate(180%) brightness(1.04);-webkit-backdrop-filter:blur(6px) saturate(180%) brightness(1.04);
  box-shadow:0 14px 34px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.25),inset 0 1px 0 var(--lg-rim),inset 0 -1px 0 rgba(255,255,255,.06),inset 0 0 22px rgba(255,255,255,.05)}
@@ -71,7 +72,15 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/4);z-index:-1;border-radius:999px;
  background:var(--nav-ind);box-shadow:inset 0 1px 2px rgba(0,0,0,.35),0 1px 0 rgba(255,255,255,.06);
  transform:translateX(calc(var(--i,0)*100%));transition:transform .5s cubic-bezier(.3,1.15,.45,1),opacity .2s;
- transition:transform .55s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1),opacity .2s}
+ transition:transform .55s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1),opacity .2s,
+  scale .4s cubic-bezier(.3,1.4,.5,1),background .25s,box-shadow .25s}
+/* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
+.dock.lift{scale:1.04}
+.dock.lift .ind{scale:1.2 1.32;background:rgba(255,255,255,.07);
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.42),inset 0 1.5px 0 rgba(255,255,255,.75),inset 0 -1px 0 rgba(255,255,255,.2),0 8px 20px rgba(0,0,0,.28)}
+.dock.drag .ind{transition:scale .4s cubic-bezier(.3,1.4,.5,1),background .25s,box-shadow .25s}
+.dock.drag .nv{color:var(--ink)}
+.dock.drag .nv.hov{color:var(--nav-on)}
 .dock .ind.mv{animation:squish .5s ease}
 @keyframes squish{0%{scale:1}35%{scale:1.08 .94}100%{scale:1}}
 :root:not([data-theme="dark"]) .dock .ind{box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
@@ -82,7 +91,6 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .nv.on{color:var(--nav-on)}
 .nv{transition:color .2s,transform .4s cubic-bezier(.34,1.3,.5,1)}
 .nv{transition:color .2s,transform .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
-.nv:active{transform:scale(.92);transition:transform .12s ease-out}
 .nv.on>.ic{animation:nvpop .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
 @keyframes nvpop{0%{scale:.85}100%{scale:1}}
 .nv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -490,7 +498,7 @@ function renderNav(){
   b.classList.toggle("on",i===cur);if(i===cur)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
  const ind=el.querySelector(".ind");ind.classList.toggle("off",cur<0);
  if(cur>=0&&ind.style.getPropertyValue("--i")!==String(cur)){const moved=ind.style.getPropertyValue("--i")!=="";ind.style.setProperty("--i",cur);
-  if(moved){ind.classList.remove("mv");void ind.offsetWidth;ind.classList.add("mv")}}
+  if(moved&&!el.classList.contains("lift")){ind.classList.remove("mv");void ind.offsetWidth;ind.classList.add("mv")}}
 }
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
@@ -1109,6 +1117,27 @@ addEventListener("resize",()=>setTimeout(vpCheck,100));
 addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
 setTimeout(vpCheck,100);
+// 導航欄手勢：按下時膠囊浮起成玻璃塊；在選中的那格按住可左右拖動，經過哪格就變紅，鬆手才切換
+(function(){const el=$("#dock");let st=null,skip=false;
+ const geo=()=>{const r=el.getBoundingClientRect(),w=(r.width-10)/4;return{r,w}};
+ const startDrag=()=>{if(!st||st.drag)return;st.drag=true;el.classList.add("drag");try{el.setPointerCapture(st.id)}catch(e){}move(st.x)};
+ const move=x=>{const{r,w}=geo(),px=Math.max(0,Math.min(3*w,x-r.left-5-w/2)),k=Math.round(px/w);
+  st.ind.style.transform=`translateX(${px}px)`;st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))};
+ const done=ok=>{if(!st)return;const s=st;st=null;clearTimeout(s.hold);
+  if(s.drag){skip=true;setTimeout(()=>skip=false,0);s.nvs.forEach(b=>b.classList.remove("hov"));
+   s.ind.style.removeProperty("transform");el.classList.remove("drag");
+   if(ok&&s.k!==s.i){s.ind.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}}
+  setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(120,320-(performance.now()-s.t0)))};
+ el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
+  const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b),on=b.classList.contains("on");
+  st={id:e.pointerId,x0:e.clientX,x:e.clientX,i,k:i,on,drag:false,t0:performance.now(),ind:el.querySelector(".ind"),nvs,hold:on?setTimeout(startDrag,260):0};
+  el.classList.add("lift")});
+ el.addEventListener("pointermove",e=>{if(!st||e.pointerId!==st.id)return;st.x=e.clientX;
+  if(st.drag)move(e.clientX);else if(st.on&&Math.abs(e.clientX-st.x0)>8)startDrag()});
+ el.addEventListener("pointerup",e=>{if(st&&e.pointerId===st.id)done(true)});
+ el.addEventListener("pointercancel",e=>{if(st&&e.pointerId===st.id)done(false)});
+ el.addEventListener("click",e=>{if(skip){skip=false;e.stopPropagation();e.preventDefault()}},true);
+})();
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
  const dk=e.target.closest("[data-dk]");if(dk){const nf=navActs[dk.dataset.dk],f=nf||dockActs[dk.dataset.dk];navTap=!!nf&&dk.dataset.dk!=="back";f&&f();return}
