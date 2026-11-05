@@ -1121,11 +1121,11 @@ addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
 setTimeout(vpCheck,100);
 // 導航欄手勢：一按下膠囊就浮起成玻璃塊、快速移到按住的那格；按住可左右拖動，經過哪格就變紅，鬆手才切換
-(function(){const el=$("#dock");let st=null,skip=false,raf=0;
+(function(){const el=$("#dock");let st=null,skip=0,raf=0;
  const put=px=>{px=Math.max(0,Math.min(3*st.w,px));const k=Math.round(px/st.w);
   st.ind.style.translate=`${px}px 0`;if(k!==st.k){st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))}};
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
-  skip=true;setTimeout(()=>skip=false,0);
+  skip=performance.now()+800;
   s.nvs.forEach(b=>b.classList.remove("hov"));s.ind.style.removeProperty("translate");el.classList.remove("drag","follow");
   if(ok&&s.k!==s.cur){s.ind.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
   else{if(s.cur>=0)s.ind.style.setProperty("--i",s.cur);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
@@ -1140,7 +1140,8 @@ setTimeout(vpCheck,100);
   cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(st)put(st.i*st.w+x-st.x0)})});
  el.addEventListener("pointerup",e=>{if(st&&e.pointerId===st.id)done(true)});
  el.addEventListener("pointercancel",e=>{if(st&&e.pointerId===st.id)done(false)});
- el.addEventListener("click",e=>{if(skip){skip=false;e.stopPropagation();e.preventDefault()}},true);
+ // 手勢已經處理過了；iPhone 的 click 會晚到，這時按鈕可能已換成別的（回上頁→入庫），一律擋掉
+ el.addEventListener("click",e=>{if(performance.now()<skip){e.stopPropagation();e.preventDefault()}},true);
 })();
 // 長按不跳出瀏覽器選單、圖片不能拖出去（輸入框照常）
 document.addEventListener("contextmenu",e=>{if(!e.target.closest("input,textarea,select,[contenteditable]"))e.preventDefault()});
