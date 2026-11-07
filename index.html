@@ -20,7 +20,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--bar-bg:var(--lg-tint);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  /* 液態玻璃（數值取自 liquidglass.dev 預設）：色調、兩級陰影、左上受光的邊緣高光、彈簧；霧化一律 blur(16px) saturate(1.6) */
  --gl:rgba(255,255,255,.5);--gl2:rgba(255,255,255,.5);--lg-tint:rgba(255,255,255,.5);--lg-ind:rgba(255,255,255,.6);
@@ -35,7 +35,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;
  --solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--bar-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),rgba(86,86,90,.58);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  --gl:rgba(255,255,255,.08);--gl2:rgba(255,255,255,.14);--lg-tint:rgba(17,24,39,.32);--lg-ind:rgba(255,255,255,.14);
  --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.5),inset -1px -1px 0 -.5px rgba(255,255,255,.16),inset 0 0 0 .5px rgba(255,255,255,.06);
@@ -66,7 +66,11 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock.follow{transition:scale .32s var(--spring),--g .32s var(--spring)}
 .dock.nt{transition:none}
 .dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
-.dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+/* 導航欄與操作列：中灰玻璃（上緣略亮），在純黑背景上也看得出形狀；選中膠囊比底色深 */
+.dock.glass,.pacts{background:var(--bar-bg)}
+/* 一整圈亮邊（上緣最亮、下緣次之），黑底上輪廓清楚 */
+.dock::before,.pacts::before{padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.16) 35%,rgba(255,255,255,.12) 65%,rgba(255,255,255,.26))}
+.dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .dock .ind,.dock .pclip{position:absolute;top:calc(4px - var(--g)*8.5px);bottom:calc(4px - var(--g)*8.5px);left:calc(4px - var(--g)*9px + var(--x));
