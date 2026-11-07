@@ -61,22 +61,21 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(var(--navb) + var(--kb,0px));z-index:30;
  width:min(calc(100% - 42px),380px);height:62px;padding:4px 10px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;--x:calc(var(--i,0)*var(--sw,0px));transition:scale .32s var(--spring),--x .41s var(--spring-nav),--g .32s var(--spring);will-change:scale}
-/* 膠囊的位置（--x）與浮起程度（--g）都是可動畫的變數：膠囊、膠囊內的紅色圖示、白色圖示的遮罩共用同一組值，每一幀都對齊 */
-@property --x{syntax:"<length>";inherits:true;initial-value:0px}
+ touch-action:none;transition:scale .32s var(--spring),--g .32s var(--spring);will-change:scale;
+ /* 膠囊幾何：--x 位置、--sx/--sy 果凍伸縮（由 JS 彈簧驅動）、--g 浮起程度（CSS 動畫）。膠囊、紅色複本、圖示遮罩都讀這組值，每一幀都對齊 */
+ --pw0:calc(var(--sw,0px) + 12px + var(--g)*18px);--ph0:calc(54px + var(--g)*17px);
+ --pw:calc(var(--pw0)*var(--sx,1));--ph:calc(var(--ph0)*var(--sy,1));
+ --pl:calc(4px - var(--g)*9px + var(--x,0px) + (var(--pw0) - var(--pw))/2);--pt:calc(31px - var(--ph)/2)}
 @property --g{syntax:"<number>";inherits:true;initial-value:0}
-.dock.follow{transition:scale .32s var(--spring),--g .32s var(--spring)}
-.dock.nt{transition:none}
 .dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
 /* 導航欄與操作列：中灰玻璃（上緣略亮），在純黑背景上也看得出形狀；選中膠囊比底色深 */
-.dock.glass,.pacts{background:var(--bar-bg)}
-/* 一整圈亮邊（上緣最亮、下緣次之），黑底上輪廓清楚 */
-.dock::before,.pacts::before{padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.16) 35%,rgba(255,255,255,.12) 65%,rgba(255,255,255,.26))}
+.dock.glass,.pacts{background:var(--bar-bg);backdrop-filter:blur(4px) saturate(1.5);-webkit-backdrop-filter:blur(4px) saturate(1.5)}
 .dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
-.dock .ind,.dock .pclip{position:absolute;top:calc(4px - var(--g)*8.5px);bottom:calc(4px - var(--g)*8.5px);left:calc(4px - var(--g)*9px + var(--x));
- width:calc(var(--sw,0px) + 12px + var(--g)*18px);border-radius:999px;transition:opacity .2s}
+/* 導航欄與操作列：一整圈亮邊（上緣最亮、下緣次之），黑底上輪廓清楚 */
+.dock::before,.pacts::before{padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.16) 35%,rgba(255,255,255,.12) 65%,rgba(255,255,255,.26))}
+.dock .ind,.dock .pclip{position:absolute;left:var(--pl);top:var(--pt);width:var(--pw);height:var(--ph);border-radius:999px;transition:opacity .2s}
 .dock .ind{z-index:-1;background:var(--nav-ind);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08),var(--lg-sh1);transition:opacity .2s,background .2s,box-shadow .2s}
 /* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
 .dock.lift{scale:1.04;--g:1}
@@ -86,22 +85,21 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
   inset 0 0 14px rgba(255,255,255,.14),0 0 0 .5px var(--lift-edge),0 8px 22px var(--lift-sh),0 2px 6px rgba(0,0,0,.18)}
 /* 膠囊蓋到哪裡，那裡的圖示就變紅：紅色複本裁在膠囊裡，同一段的白色圖示用遮罩挖掉 */
 .dock .pclip{z-index:2;overflow:hidden;pointer-events:none}
-.nvc{position:absolute;left:calc(var(--g)*9px - 4px - var(--x));top:calc(var(--g)*8.5px - 4px);width:var(--dw,0px);height:62px;
+.nvc{position:absolute;left:calc(-1*var(--pl));top:calc(-1*var(--pt));width:var(--dw,0px);height:62px;
  display:grid;grid-template-columns:repeat(4,1fr);padding:4px 10px}
 .nvc>b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;font-size:11px;font-weight:600;color:var(--nav-on)}
 .nvc .ic{width:28px;height:28px}
 .nvc i{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .nv:nth-of-type(2){--j:1}.nv:nth-of-type(3){--j:2}.nv:nth-of-type(4){--j:3}
 /* 白色圖示挖掉膠囊形狀（中間長方形＋兩端半圓），跟紅色複本的圓弧完全吻合；座標都換算到各圖示自己的位置 */
-.dock:not(.noind) .nv{--a0:calc(4px - var(--g)*9px + var(--x) - 10px - var(--j,0)*var(--sw,0px));--pw:calc(var(--sw,0px) + 12px + var(--g)*18px);
- --ph:calc(54px + var(--g)*17px);--pt:calc(var(--g)*-8.5px);
+.dock:not(.noind) .nv{--a0:calc(var(--pl) - 10px - var(--j,0)*var(--sw,0px));--mt:calc(var(--pt) - 4px);
  -webkit-mask-image:linear-gradient(#000 0 0),linear-gradient(#000 0 0),radial-gradient(closest-side,#000 96%,transparent),radial-gradient(closest-side,#000 96%,transparent);
  mask-image:linear-gradient(#000 0 0),linear-gradient(#000 0 0),radial-gradient(closest-side,#000 96%,transparent),radial-gradient(closest-side,#000 96%,transparent);
  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
  -webkit-mask-size:100% 100%,calc(var(--pw) - var(--ph)) var(--ph),var(--ph) var(--ph),var(--ph) var(--ph);
  mask-size:100% 100%,calc(var(--pw) - var(--ph)) var(--ph),var(--ph) var(--ph),var(--ph) var(--ph);
- -webkit-mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--pt),var(--a0) var(--pt),calc(var(--a0) + var(--pw) - var(--ph)) var(--pt);
- mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--pt),var(--a0) var(--pt),calc(var(--a0) + var(--pw) - var(--ph)) var(--pt);
+ -webkit-mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--mt),var(--a0) var(--mt),calc(var(--a0) + var(--pw) - var(--ph)) var(--mt);
+ mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--mt),var(--a0) var(--mt),calc(var(--a0) + var(--pw) - var(--ph)) var(--mt);
  -webkit-mask-composite:source-out,source-over,source-over;mask-composite:subtract,add,add}
 .dock.noind .ind,.dock.noind .pclip{opacity:0}
 .nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;border:0;padding:0;background:transparent;
@@ -527,12 +525,28 @@ function renderNav(){
   b.classList.toggle("on",i===cur);if(i===cur)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
  el.classList.toggle("noind",cur<0);if(cur<0)return;
  // 第一次顯示直接定位，不從最左邊滑過來
- if(fresh){el.classList.add("nt");el.style.setProperty("--i",cur);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove("nt")))}
- else el.style.setProperty("--i",cur);
+ navCur=cur;pill.to(cur*navSW(),{instant:fresh});
 }
 // 欄位寬與導航欄寬（px）：膠囊位置、紅色複本、遮罩都用它換算
-function navSize(){const el=$("#dock");el.style.setProperty("--sw",(el.offsetWidth-20)/4+"px");el.style.setProperty("--dw",el.offsetWidth+"px")}
-addEventListener("resize",navSize);
+let navCur=0;
+const navSW=()=>($("#dock").offsetWidth-20)/4;
+function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px");el.style.setProperty("--dw",el.offsetWidth+"px")}
+addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
+// 膠囊的果凍彈簧：位置用彈簧追目標（拖動時追手指，較硬），每幀算出速度；
+// 速度越快橫向拉得越長，拉伸量本身再用一個較 Q 的彈簧追，急停時回彈過頭變成上下撐高的擠壓，晃幾下回到原狀
+const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=380,c=30,live=false;
+ const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
+ // 只往外長、不縮小：拉伸時變寬（高度不變），回彈擠壓時改成變高，膠囊永遠不小於原本大小
+ const apply=()=>{const d=el(),sx=Math.max(1,s),sy=s<1?Math.min(1.25,1+(1-s)*1.4):1;
+  d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
+ const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;
+  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/1800,.2);sv+=(520*(ts-s)-13*sv)*h;s+=sv*h}
+  apply();
+  if(!live&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002&&Math.abs(sv)<.02){x=t;v=0;s=1;sv=0;apply();raf=0;return}
+  raf=requestAnimationFrame(step)};
+ return{to(nt,o={}){t=nt;live=!!o.drag;k=o.drag?900:380;c=o.drag?48:30;
+  if(o.instant||still()){x=t;v=0;s=1;sv=0;apply();cancelAnimationFrame(raf);raf=0;return}
+  if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
  dockActs={};let el=$("#pacts");
@@ -1149,12 +1163,12 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 setTimeout(vpCheck,100);
 // 導航欄手勢：一按下膠囊就浮起成玻璃塊、快速移到按住的那格；按住可左右拖動，膠囊蓋到的圖示就變紅，鬆手才切換
 (function(){const el=$("#dock");let st=null,skip=0,raf=0;
- const put=px=>{px=Math.max(0,Math.min(3*st.w,px));st.k=Math.round(px/st.w);el.style.setProperty("--x",px+"px")};
+ const put=px=>{px=Math.max(0,Math.min(3*st.w,px));st.k=Math.round(px/st.w);pill.to(px,{drag:true})};
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
   skip=performance.now()+800;
-  el.style.removeProperty("--x");el.classList.remove("drag","follow");
-  if(ok&&s.k!==s.cur){el.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
-  else{if(s.cur>=0)el.style.setProperty("--i",s.cur);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
+  el.classList.remove("drag");
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
+  else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
   setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)))};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
@@ -1162,7 +1176,7 @@ setTimeout(vpCheck,100);
   try{el.setPointerCapture(e.pointerId)}catch(_){}
   el.classList.add("lift","drag");put(i*st.w)});
  el.addEventListener("pointermove",e=>{if(!st||e.pointerId!==st.id)return;const x=e.clientX;
-  if(!st.moved){if(Math.abs(x-st.x0)<6)return;st.moved=true;el.classList.add("follow")}
+  if(!st.moved){if(Math.abs(x-st.x0)<6)return;st.moved=true}
   cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{if(st)put(st.i*st.w+x-st.x0)})});
  el.addEventListener("pointerup",e=>{if(st&&e.pointerId===st.id)done(true)});
  el.addEventListener("pointercancel",e=>{if(st&&e.pointerId===st.id)done(false)});
