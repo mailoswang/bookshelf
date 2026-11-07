@@ -58,38 +58,45 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
- width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;transition:scale .32s var(--spring);will-change:scale}
+ width:min(calc(100% - 42px),380px);height:62px;padding:4px 10px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
+ touch-action:none;--x:calc(var(--i,0)*var(--sw,0px));transition:scale .32s var(--spring),--x .41s var(--spring-nav),--g .32s var(--spring);will-change:scale}
+/* 膠囊的位置（--x）與浮起程度（--g）都是可動畫的變數：膠囊、膠囊內的紅色圖示、白色圖示的遮罩共用同一組值，每一幀都對齊 */
+@property --x{syntax:"<length>";inherits:true;initial-value:0px}
+@property --g{syntax:"<number>";inherits:true;initial-value:0}
+.dock.follow{transition:scale .32s var(--spring),--g .32s var(--spring)}
+.dock.nt{transition:none}
 .dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
 .dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
-.dock .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc((100% - 10px)/4);z-index:-1;border-radius:999px;
- background:var(--nav-ind);box-shadow:var(--lg-sh1);
- translate:calc(var(--i,0)*100%) 0;
- transition:translate .41s var(--spring-nav),opacity .2s,scale .32s var(--spring),background .2s,box-shadow .2s;will-change:translate,scale}
+.dock .ind,.dock .pclip{position:absolute;top:calc(4px - var(--g)*8.5px);bottom:calc(4px - var(--g)*8.5px);left:calc(4px - var(--g)*9px + var(--x));
+ width:calc(var(--sw,0px) + 12px + var(--g)*18px);border-radius:999px;transition:opacity .2s}
+.dock .ind{z-index:-1;background:var(--nav-ind);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08),var(--lg-sh1);transition:opacity .2s,background .2s,box-shadow .2s}
 /* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
-.dock.lift{scale:1.04}
-.dock.lift .ind{scale:1.18 1.32;background:var(--lg-ind);box-shadow:var(--spec),var(--lg-sh2)}
-.dock.follow .ind{transition:scale .32s var(--spring),background .2s,box-shadow .2s}
-.dock.drag .nv{color:var(--ink)}
-.dock.drag .nv.hov{color:var(--nav-on)}
-.dock .ind.mv{animation:squish .41s ease-out}
-@keyframes squish{0%{scale:1}35%{scale:1.08 .94}100%{scale:1}}
-.dock .ind.off{opacity:0}
-.nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border:0;padding:0;background:transparent;
- font:inherit;font-size:.72rem;font-weight:600;color:var(--ink);cursor:pointer;border-radius:999px;transition:color .2s}
-.nv .ic{width:26px;height:26px}
-.nv.on{color:var(--nav-on)}
-.nv.on>.ic{animation:nvpop .32s var(--spring)}
-@keyframes nvpop{0%{scale:.85}100%{scale:1}}
+.dock.lift{scale:1.04;--g:1}
+.dock.lift .ind{background:var(--lg-ind);box-shadow:var(--spec),var(--lg-sh2)}
+/* 膠囊蓋到哪裡，那裡的圖示就變紅：紅色複本裁在膠囊裡，同一段的白色圖示用遮罩挖掉 */
+.dock .pclip{z-index:2;overflow:hidden;pointer-events:none}
+.nvc{position:absolute;left:calc(var(--g)*9px - 4px - var(--x));top:calc(var(--g)*8.5px - 4px);width:var(--dw,0px);height:62px;
+ display:grid;grid-template-columns:repeat(4,1fr);padding:4px 10px}
+.nvc>b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;font-size:11px;font-weight:600;color:var(--nav-on)}
+.nvc .ic{width:28px;height:28px}
+.nvc i{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.nv:nth-of-type(2){--j:1}.nv:nth-of-type(3){--j:2}.nv:nth-of-type(4){--j:3}
+/* 分界點夾在圖示寬度內：WebKit 遇到超出範圍的漸層分界點會把整個遮罩算錯，圖示整個消失 */
+.dock:not(.noind) .nv{--a0:calc(4px - var(--g)*9px + var(--x) - 10px - var(--j,0)*var(--sw,0px));--a:clamp(0px,var(--a0),100%);--b:clamp(0px,calc(var(--a0) + var(--sw,0px) + 12px + var(--g)*18px),100%);
+ -webkit-mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b));mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b))}
+.dock.noind .ind,.dock.noind .pclip{opacity:0}
+.nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;border:0;padding:0;background:transparent;
+ font:inherit;font-size:11px;font-weight:600;color:var(--ink);cursor:pointer;border-radius:999px}
+.nv .ic{width:28px;height:28px}
 .nv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .dock.syncing [data-dk="cfg"]::after,.dock.err [data-dk="cfg"]::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:var(--sub)}
 .dock.syncing [data-dk="cfg"]::after{animation:pulse 1s ease-in-out infinite}
 .dock.err [data-dk="cfg"]::after{background:var(--acc)}
 /* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
-.pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 80px + var(--kb,0px));z-index:29;
- width:min(calc(100% - 40px),390px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important}
+.pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 78px + var(--kb,0px));z-index:29;
+ width:min(calc(100% - 42px),380px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important}
 .pacts .btn{flex:1 1 0;min-width:0;justify-content:center;gap:6px;border-radius:999px;border:0;background:transparent;padding:0 6px;font-size:.9rem;white-space:nowrap}
 .pacts .btn span{overflow:hidden;text-overflow:ellipsis}
 .pacts .btn:not(.pri){box-shadow:none}
@@ -116,7 +123,7 @@ main>*{animation:rise .4s ease both}
 main>*:nth-child(2){animation-delay:.04s}main>*:nth-child(3){animation-delay:.08s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-transparency:reduce){:root,:root[data-theme="dark"]{--lg-tint:color-mix(in srgb,var(--bg1) 96%,transparent)}.dock.glass,.pacts,.dlg-p.glass,.toast,.btn.dim,.pill{backdrop-filter:none;-webkit-backdrop-filter:none}}
-@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.nv,.card,.dock .ind{transition:none}.dock .ind.mv,.nv.on>.ic{animation:none}}
+@media (prefers-reduced-motion:reduce){main>*{animation:none}.ib,.card,.dock,.dock .ind{transition:none}}
 
 /* buttons / fields */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-weight:600;font-size:1rem;color:var(--ink);cursor:pointer;min-height:44px;padding:0 20px;border-radius:22px;border:0;background:var(--gl2);
@@ -495,14 +502,20 @@ function renderNav(){
   {id:"cfg",label:"設定",fn:()=>go("#/settings")},
   {id:"me",label:"我的書櫃",fn:()=>go("#/me")}];
  navActs={};items.forEach(a=>navActs[a.id]=a.fn);
- if(!el.querySelector(".ind"))el.innerHTML=`<span class="ind" aria-hidden="true"></span>`+items.map(()=>`<button class="nv"></button>`).join("");
+ const fresh=!el.querySelector(".ind");
+ if(fresh)el.innerHTML=`<span class="ind" aria-hidden="true"></span>`+items.map(()=>`<button class="nv"></button>`).join("")+`<span class="pclip" aria-hidden="true"><span class="nvc">${items.map(()=>"<b></b>").join("")}</span></span>`;
+ const nx=el.querySelectorAll(".nvc>b");navSize();
  el.querySelectorAll(".nv").forEach((b,i)=>{const a=items[i];
-  if(b.dataset.dk!==a.id){b.dataset.dk=a.id;b.setAttribute("aria-label",a.label);b.innerHTML=nic(a.id)+`<span>${a.label}</span>`}
+  if(b.dataset.dk!==a.id){b.dataset.dk=a.id;b.setAttribute("aria-label",a.label);b.innerHTML=nic(a.id)+`<span>${a.label}</span>`;nx[i].innerHTML=nic(a.id)+`<i>${a.label}</i>`}
   b.classList.toggle("on",i===cur);if(i===cur)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- const ind=el.querySelector(".ind");ind.classList.toggle("off",cur<0);
- if(cur>=0&&ind.style.getPropertyValue("--i")!==String(cur)){const moved=ind.style.getPropertyValue("--i")!=="";ind.style.setProperty("--i",cur);
-  if(moved&&!el.classList.contains("lift")){ind.classList.remove("mv");void ind.offsetWidth;ind.classList.add("mv")}}
+ el.classList.toggle("noind",cur<0);if(cur<0)return;
+ // 第一次顯示直接定位，不從最左邊滑過來
+ if(fresh){el.classList.add("nt");el.style.setProperty("--i",cur);requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove("nt")))}
+ else el.style.setProperty("--i",cur);
 }
+// 欄位寬與導航欄寬（px）：膠囊位置、紅色複本、遮罩都用它換算
+function navSize(){const el=$("#dock");el.style.setProperty("--sw",(el.offsetWidth-20)/4+"px");el.style.setProperty("--dw",el.offsetWidth+"px")}
+addEventListener("resize",navSize);
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
  dockActs={};let el=$("#pacts");
@@ -1111,19 +1124,18 @@ addEventListener("resize",()=>setTimeout(vpCheck,100));
 addEventListener("pageshow",()=>{vpTry=0;vpCheck()});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){vpTry=0;setTimeout(vpCheck,100)}});
 setTimeout(vpCheck,100);
-// 導航欄手勢：一按下膠囊就浮起成玻璃塊、快速移到按住的那格；按住可左右拖動，經過哪格就變紅，鬆手才切換
+// 導航欄手勢：一按下膠囊就浮起成玻璃塊、快速移到按住的那格；按住可左右拖動，膠囊蓋到的圖示就變紅，鬆手才切換
 (function(){const el=$("#dock");let st=null,skip=0,raf=0;
- const put=px=>{px=Math.max(0,Math.min(3*st.w,px));const k=Math.round(px/st.w);
-  st.ind.style.translate=`${px}px 0`;if(k!==st.k){st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))}};
+ const put=px=>{px=Math.max(0,Math.min(3*st.w,px));st.k=Math.round(px/st.w);el.style.setProperty("--x",px+"px")};
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
   skip=performance.now()+800;
-  s.nvs.forEach(b=>b.classList.remove("hov"));s.ind.style.removeProperty("translate");el.classList.remove("drag","follow");
-  if(ok&&s.k!==s.cur){s.ind.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
-  else{if(s.cur>=0)s.ind.style.setProperty("--i",s.cur);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
+  el.style.removeProperty("--x");el.classList.remove("drag","follow");
+  if(ok&&s.k!==s.cur){el.style.setProperty("--i",s.k);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
+  else{if(s.cur>=0)el.style.setProperty("--i",s.cur);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
   setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)))};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
-  st={id:e.pointerId,x0:e.clientX,i,k:-1,moved:false,w:(el.offsetWidth-10)/4,cur:nvs.findIndex(n=>n.classList.contains("on")),t0:performance.now(),ind:el.querySelector(".ind"),nvs};
+  st={id:e.pointerId,x0:e.clientX,i,k:-1,moved:false,w:(el.offsetWidth-20)/4,cur:nvs.findIndex(n=>n.classList.contains("on")),t0:performance.now(),nvs};
   try{el.setPointerCapture(e.pointerId)}catch(_){}
   el.classList.add("lift","drag");put(i*st.w)});
  el.addEventListener("pointermove",e=>{if(!st||e.pointerId!==st.id)return;const x=e.clientX;
