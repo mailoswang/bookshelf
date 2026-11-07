@@ -61,7 +61,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(var(--navb) + var(--kb,0px));z-index:30;
  width:min(calc(100% - 42px),380px);height:62px;padding:4px 10px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;transition:scale .42s cubic-bezier(.22,.8,.3,1),--g .42s cubic-bezier(.22,.8,.3,1);will-change:scale;
+ touch-action:none;transition:scale .36s cubic-bezier(.22,.8,.3,1),--g .36s cubic-bezier(.22,.8,.3,1);will-change:scale;
  /* 膠囊幾何：--x 位置、--sx/--sy 果凍伸縮（由 JS 彈簧驅動）、--g 浮起程度（CSS 動畫）。膠囊、紅色複本、圖示遮罩都讀這組值，每一幀都對齊 */
  --pw0:calc(var(--sw,0px) + 12px + var(--g)*18px);--ph0:calc(54px + var(--g)*17px);
  --pw:calc(var(--pw0)*var(--sx,1) - var(--cmp,0px));--ph:calc(var(--ph0)*var(--sy,1));
@@ -82,8 +82,8 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock .ind{z-index:-1;background-color:var(--nav-ind);
  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 1.5px 2px 0 -.5px rgba(255,255,255,0),inset -1px -1.5px 0 -.5px rgba(255,255,255,0),
   inset 0 0 14px rgba(255,255,255,0),0 0 0 .5px rgba(0,0,0,0),0 1px 3px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,0);
- transition:opacity .2s,background-color .5s cubic-bezier(.22,.8,.3,1),box-shadow .5s cubic-bezier(.22,.8,.3,1)}
-.dock .ind::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .5s cubic-bezier(.22,.8,.3,1);
+ transition:opacity .2s,background-color .4s cubic-bezier(.22,.8,.3,1),box-shadow .4s cubic-bezier(.22,.8,.3,1)}
+.dock .ind::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .4s cubic-bezier(.22,.8,.3,1);
  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 55%,rgba(255,255,255,.1))}
 .dock.lift .ind::after{opacity:1;transition-duration:.25s}
 /* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
@@ -543,20 +543,22 @@ function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px")
 addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
 // 膠囊的果凍動畫：位置用不過衝的彈簧追目標（拖動時追手指，較硬），每幀算出速度；
 // 拉伸用臨界阻尼、偏柔的彈簧跟著速度平順變長，再慢慢收回（不會縮過頭）；開始減速時再主動播放一次「上下撐開再回來」的擠壓，只有這一下
-const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vmax=0,sq=null,armed=false,onArrive=null;
+const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vmax=0,sq=null,armed=false,onArrive=null,dragArm=false,vdir=0;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
  // 只往外長、不縮小：拉伸時變寬（高度不變），擠壓時變高
  // 煞車擠壓 cmp：寬度少 cmp，位置往靠邊那側挪 cmp/2，所以靠邊那側不動、後面那側往內縮
  const apply=(sy,cmp=0,side=0,sx=Math.max(1,s))=>{const d=el();d.style.setProperty("--cmp",cmp.toFixed(2)+"px");d.style.setProperty("--x",(x+side*cmp/2).toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
  // 照實際經過的時間補算（掉幀時直接跳到該在的位置，不會整段被拖慢）；細分成每步 4ms 以內，彈簧才穩定
  const step=now=>{const dt=Math.min(.1,(now-last)/1000||.016),n=Math.ceil(dt/.004);last=now;
-  for(let i=0,h=dt/n;i<n;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(110*(ts-s)-21*sv)*h;s+=sv*h}
-  const av=Math.abs(v);if(armed&&av>vmax)vmax=av;
+  for(let i=0,h=dt/n;i<n;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(165*(ts-s)-25.7*sv)*h;s+=sv*h}
+  const av=Math.abs(v);if(armed&&av>vmax)vmax=av;if(av>150)vdir=Math.sign(v);
+  // 拖動中減速（掉到這次最高速的 4 成以下）也煞車一次：前進方向那側不動、後面那側往內縮；要再加速才會再觸發
+  if(live){if(av>300)dragArm=true;if(dragArm&&vmax>300&&av<vmax*.4){dragArm=false;sq={t0:now,a:Math.min(.07,Math.min(vmax/900,.22)*.35),c:Math.min(16,vmax/100),side:vdir};vmax=0}}
   // 一開始減速（速度掉到最高速的一半）就播一次擠壓，跟橫向縮回同時發生：上下撐開，幅度依最高速度，最多 1.07 倍
-  // 1 秒：前 30% 平順撐起，後 70% 慢慢收回（漸慢），頭尾都平緩；每次移動只播一次
+  // 0.8 秒：前 30% 平順撐起，後 70% 慢慢收回（漸慢），頭尾都平緩；每次移動只播一次
   if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;const side=t<1?-1:t>3*navSW()-1?1:0;sq={t0:now,a:Math.min(.07,Math.min(vmax/900,.22)*.35),c:side?Math.min(16,vmax/100):0,side};vmax=0}
-  let sy=1,cmp=0,side=0,sxv=Math.max(1,s);if(sq){const p=(now-sq.t0)/1000;if(p>=1)sq=null;else{const q=p<.3?Math.sin(Math.PI/2*p/.3):Math.cos(Math.PI/2*(p-.3)/.7);sy=1+sq.a*q*q;
-   // 衝到兩端像煞車：靠邊那側不動，後面那側前 15% 快速往內縮、之後約 0.55 秒慢慢彈回
+  let sy=1,cmp=0,side=0,sxv=Math.max(1,s);if(sq){const p=(now-sq.t0)/800;if(p>=1)sq=null;else{const q=p<.3?Math.sin(Math.PI/2*p/.3):Math.cos(Math.PI/2*(p-.3)/.7);sy=1+sq.a*q*q;
+   // 衝到兩端像煞車：靠邊那側不動，後面那側前 15% 快速往內縮、之後約 0.45 秒慢慢彈回
    if(sq.c){const r=p<.15?Math.sin(Math.PI/2*p/.15):Math.cos(Math.PI/2*Math.min(1,(p-.15)/.55));cmp=sq.c*r*r;side=sq.side;
     // 煞車把衝刺的橫向拉伸吃掉：擠壓越深，拉伸收得越多
     if(p<.15)sq.m=Math.max(sq.m||0,r);sxv=1+(sxv-1)*(1-(sq.m||0))}}}
@@ -568,7 +570,7 @@ const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vma
   // 膠囊滑到目標附近再做事（例如換頁）：重建頁面很吃效能，等膠囊到位再做才不會卡住動畫；最多等 ms 毫秒
   arrive(f,ms=300){if(!raf||Math.abs(t-x)<6){f();return}let done=false;const g=()=>{if(!done){done=true;onArrive=null;f()}};onArrive=g;setTimeout(g,ms)},
   // 目標沒變（例如換頁後重繪導航欄又定位一次）就不重新觸發擠壓
-  to(nt,o={}){if(Math.abs(nt-t)>.5||o.drag)armed=true;t=nt;live=!!o.drag;k=o.drag?1400:420;c=o.drag?70:38;
+  to(nt,o={}){if(Math.abs(nt-t)>.5||o.drag)armed=true;t=nt;live=!!o.drag;k=o.drag?1400:560;c=o.drag?70:44;
   if(o.instant||still()){x=t;v=0;s=1;sv=0;vmax=0;sq=null;armed=false;apply(1);cancelAnimationFrame(raf);raf=0;if(onArrive){const f=onArrive;onArrive=null;f()}return}
   if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
@@ -1192,8 +1194,8 @@ setTimeout(vpCheck,100);
   skip=performance.now()+800;
   el.classList.remove("drag");
   const drop=()=>setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)));
-  // 換頁：等膠囊到位才換；浮起狀態再晚 0.25 秒（煞車擠壓最深之後）才收回，滑動、煞車、收回依序發生
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},250);navTap=id!=="back";navActs[id]&&navActs[id]()})}
+  // 換頁：等膠囊到位才換；浮起狀態再晚 0.2 秒（煞車擠壓最深之後）才收回，滑動、煞車、收回依序發生
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},200);navTap=id!=="back";navActs[id]&&navActs[id]()})}
   else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home();drop()}};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
