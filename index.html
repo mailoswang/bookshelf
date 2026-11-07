@@ -20,7 +20,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.36);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--nvx-bg:rgba(255,255,255,.5);
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.36);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  --gl:rgba(255,255,255,.58);--gl2:rgba(255,255,255,.82);--gl-hi:rgba(255,255,255,.95);--gl-lo:rgba(0,0,0,.05);--gl-edge:rgba(0,0,0,.07);
  --gl-drop:0 8px 24px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
@@ -31,7 +31,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;
  --solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.26);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--nvx-bg:rgba(48,48,52,.42);
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.26);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  --gl:rgba(255,255,255,.055);--gl2:rgba(255,255,255,.1);--gl-hi:rgba(255,255,255,.2);--gl-lo:rgba(255,255,255,.04);--gl-edge:rgba(255,255,255,.07);
  --gl-drop:0 10px 30px rgba(0,0,0,.35),0 1px 3px rgba(0,0,0,.3);
@@ -77,9 +77,13 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 @keyframes squish{0%{scale:1}35%{scale:1.08 .94}100%{scale:1}}
 :root:not([data-theme="dark"]) .dock .ind{box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
 .dock .ind.off{opacity:0}
-/* 折射層：一份全部選中（紅色）的導航圖示複本，被裁成膠囊形狀並經過位移濾鏡，按住時圖示在玻璃邊緣彎曲、帶色差 */
+/* 折射層：一份全部選中（紅色）的導航圖示複本，被裁成膠囊形狀並經過位移濾鏡，按住時圖示在玻璃邊緣彎曲、帶色差。
+   底色透明，後面照樣看得到導航欄原本的模糊；鏡片範圍內原本的圖示用遮罩挖掉，才不會疊成兩層 */
 .nvx{position:absolute;inset:-10px;z-index:1;pointer-events:none;display:grid;grid-template-columns:repeat(4,1fr);padding:15px;
- background:var(--nvx-bg);opacity:0;transition:opacity .2s cubic-bezier(.45,0,.2,1)}
+ opacity:0;transition:opacity .2s cubic-bezier(.45,0,.2,1)}
+.dock.lensing .ind{background:transparent;box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.dock.lensing .nv{--a:calc(var(--la,0px) - var(--o,0px));--b:calc(var(--lb,0px) - var(--o,0px));
+ -webkit-mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b));mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b))}
 .dock.lift .nvx.on{opacity:1}
 .nvx>b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;font-size:.72rem;font-weight:600;color:var(--nav-on)}
 .nvx .ic{width:26px;height:26px}
@@ -1748,14 +1752,16 @@ setTimeout(vpCheck,100);
  const lensFrame=()=>{const nx=el.querySelector(".nvx"),ind=el.querySelector(".ind");if(!nx||!lens)return;
   const nr=nx.getBoundingClientRect(),ir=ind.getBoundingClientRect(),k=nr.width/nx.offsetWidth||1;
   const cx=((ir.left+ir.right)/2-nr.left)/k,cy=((ir.top+ir.bottom)/2-nr.top)/k;
-  lens.update({x:Math.max(0,Math.min(nx.offsetWidth-L.w,cx-L.w/2)),y:cy-L.h/2});lraf=requestAnimationFrame(lensFrame)};
+  const x=Math.max(0,Math.min(nx.offsetWidth-L.w,cx-L.w/2));lens.update({x,y:cy-L.h/2});
+  el.style.setProperty("--la",x-10+"px");el.style.setProperty("--lb",x-10+L.w+"px");lraf=requestAnimationFrame(lensFrame)};
  const lensOn=()=>{const nx=el.querySelector(".nvx");if(!nx||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   clearTimeout(loff);const w=(el.offsetWidth-10)/4*1.18,h=(el.offsetHeight-10)*1.32;
-  try{if(!lens)lens=LG.createGlass(nx,{clip:true,sync:true,hidden:true,refraction:22,bezel:.7,curvature:3,chroma:.3,specular:.85,specularWidth:1.5});
+  try{if(!lens)lens=LG.createGlass(nx,{clip:true,sync:true,hidden:true,refraction:22,bezel:.7,curvature:3,chroma:.12,specular:.85,specularWidth:1.5});
    if(!L||L.w!==w){L={w,h};lens.update({width:w,height:h,radius:h/2})}
-   lens.update({hidden:false});nx.classList.add("on");cancelAnimationFrame(lraf);lensFrame()}catch(e){lens=null}};
+   el.querySelectorAll(".nv").forEach(b=>b.style.setProperty("--o",b.offsetLeft+"px"));
+   lens.update({hidden:false});cancelAnimationFrame(lraf);lensFrame();nx.classList.add("on");el.classList.add("lensing")}catch(e){lens=null}};
  const lensOff=()=>{const nx=el.querySelector(".nvx");if(nx)nx.classList.remove("on");clearTimeout(loff);
-  loff=setTimeout(()=>{cancelAnimationFrame(lraf);if(lens)lens.update({hidden:true})},260)};
+  loff=setTimeout(()=>{cancelAnimationFrame(lraf);el.classList.remove("lensing");if(lens)lens.update({hidden:true})},260)};
  const put=px=>{px=Math.max(0,Math.min(3*st.w,px));const k=Math.round(px/st.w);
   st.ind.style.translate=`${px}px 0`;if(k!==st.k){st.k=k;st.nvs.forEach((b,i)=>b.classList.toggle("hov",i===k))}};
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
