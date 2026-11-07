@@ -543,7 +543,7 @@ function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px")
 addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
 // 膠囊的果凍動畫：位置用臨界阻尼彈簧追目標（不過衝、指哪停哪），每幀算出速度；拉伸跟著速度平順變長再收回；
 // 減速時播一次「上下撐開再回來」的擠壓，只有這一下。輕按（tap）用快而輕的一組參數，拖動（drag）跟手、變形較明顯
-const PM={tap:{k:1200,c:69,sk:420,sc:41,sv:3000,smax:.1,sa:.022,dur:460,cmax:9,cdiv:300},
+const PM={tap:{k:1200,c:69,sk:420,sc:41,sv:3000,smax:.1,sa:.008,dur:460,cmax:16,cdiv:100},
  drag:{k:1400,c:70,sk:300,sc:34.6,sv:1100,smax:.2,sa:.06,dur:620,cmax:14,cdiv:110}};
 const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,m=PM.tap,live=false,vmax=0,sq=null,armed=false,onArrive=null,dragArm=false,vdir=0;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
