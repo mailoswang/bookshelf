@@ -60,7 +60,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
-.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
+.dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
  width:min(calc(100% - 40px),390px);height:64px;padding:5px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
  touch-action:none;transition:scale .32s cubic-bezier(.45,0,.2,1);will-change:scale}
 .dock.glass{border:0;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.02) 45%,rgba(255,255,255,.05)),var(--lg-bg);
