@@ -540,13 +540,14 @@ const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vma
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
  // 只往外長、不縮小：拉伸時變寬（高度不變），擠壓時變高
  const apply=sy=>{const d=el();d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",Math.max(1,s).toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
- const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;
-  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(480*(ts-s)-44*sv)*h;s+=sv*h}
+ // 照實際經過的時間補算（掉幀時直接跳到該在的位置，不會整段被拖慢）；細分成每步 4ms 以內，彈簧才穩定
+ const step=now=>{const dt=Math.min(.1,(now-last)/1000||.016),n=Math.ceil(dt/.004);last=now;
+  for(let i=0,h=dt/n;i<n;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(480*(ts-s)-44*sv)*h;s+=sv*h}
   const av=Math.abs(v);if(armed&&av>vmax)vmax=av;
-  // 一開始減速（速度掉到最高速的一半）就播一次擠壓，跟橫向縮回同時發生：上下撐開，幅度依最高速度，最多 1.15 倍
-  // 0.32 秒，快速撐起、較慢收回；每次移動只播一次
-  if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;sq={t0:now,a:Math.min(.15,Math.min(vmax/900,.22)*.7)};vmax=0}
-  let sy=1;if(sq){const p=(now-sq.t0)/320;if(p>=1)sq=null;else sy=1+sq.a*Math.sin(Math.PI*Math.pow(p,.7))}
+  // 一開始減速（速度掉到最高速的一半）就播一次擠壓，跟橫向縮回同時發生：上下撐開，幅度依最高速度，最多 1.07 倍
+  // 0.36 秒，sin² 曲線頭尾都平緩、自然收尾；每次移動只播一次
+  if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;sq={t0:now,a:Math.min(.07,Math.min(vmax/900,.22)*.35)};vmax=0}
+  let sy=1;if(sq){const p=(now-sq.t0)/360;if(p>=1)sq=null;else{const q=Math.sin(Math.PI*p);sy=1+sq.a*q*q}}
   apply(sy);
   if(onArrive&&Math.abs(t-x)<6){const f=onArrive;onArrive=null;f()}
   if(!live&&!sq&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002){x=t;v=0;s=1;sv=0;vmax=0;armed=false;apply(1);raf=0;return}
@@ -1177,9 +1178,10 @@ setTimeout(vpCheck,100);
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
   skip=performance.now()+800;
   el.classList.remove("drag");
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{navTap=id!=="back";navActs[id]&&navActs[id]()})}
-  else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
-  setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)))};
+  const drop=()=>setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)));
+  // 換頁：等膠囊到位才換、浮起狀態也那時才收回，滑動、收回、換頁不會全擠在同一刻
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{if(!st)el.classList.remove("lift");navTap=id!=="back";navActs[id]&&navActs[id]()})}
+  else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home();drop()}};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
   st={id:e.pointerId,x0:e.clientX,i,k:-1,moved:false,w:(el.offsetWidth-20)/4,cur:nvs.findIndex(n=>n.classList.contains("on")),t0:performance.now(),nvs};
