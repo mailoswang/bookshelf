@@ -83,9 +83,17 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .nvc .ic{width:28px;height:28px}
 .nvc i{font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .nv:nth-of-type(2){--j:1}.nv:nth-of-type(3){--j:2}.nv:nth-of-type(4){--j:3}
-/* 分界點夾在圖示寬度內：WebKit 遇到超出範圍的漸層分界點會把整個遮罩算錯，圖示整個消失 */
-.dock:not(.noind) .nv{--a0:calc(4px - var(--g)*9px + var(--x) - 10px - var(--j,0)*var(--sw,0px));--a:clamp(0px,var(--a0),100%);--b:clamp(0px,calc(var(--a0) + var(--sw,0px) + 12px + var(--g)*18px),100%);
- -webkit-mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b));mask-image:linear-gradient(to right,#000 var(--a),transparent var(--a),transparent var(--b),#000 var(--b))}
+/* 白色圖示挖掉膠囊形狀（中間長方形＋兩端半圓），跟紅色複本的圓弧完全吻合；座標都換算到各圖示自己的位置 */
+.dock:not(.noind) .nv{--a0:calc(4px - var(--g)*9px + var(--x) - 10px - var(--j,0)*var(--sw,0px));--pw:calc(var(--sw,0px) + 12px + var(--g)*18px);
+ --ph:calc(54px + var(--g)*17px);--pt:calc(var(--g)*-8.5px);
+ -webkit-mask-image:linear-gradient(#000 0 0),linear-gradient(#000 0 0),radial-gradient(closest-side,#000 96%,transparent),radial-gradient(closest-side,#000 96%,transparent);
+ mask-image:linear-gradient(#000 0 0),linear-gradient(#000 0 0),radial-gradient(closest-side,#000 96%,transparent),radial-gradient(closest-side,#000 96%,transparent);
+ -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+ -webkit-mask-size:100% 100%,calc(var(--pw) - var(--ph)) var(--ph),var(--ph) var(--ph),var(--ph) var(--ph);
+ mask-size:100% 100%,calc(var(--pw) - var(--ph)) var(--ph),var(--ph) var(--ph),var(--ph) var(--ph);
+ -webkit-mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--pt),var(--a0) var(--pt),calc(var(--a0) + var(--pw) - var(--ph)) var(--pt);
+ mask-position:0 0,calc(var(--a0) + var(--ph)/2) var(--pt),var(--a0) var(--pt),calc(var(--a0) + var(--pw) - var(--ph)) var(--pt);
+ -webkit-mask-composite:source-out,source-over,source-over;mask-composite:subtract,add,add}
 .dock.noind .ind,.dock.noind .pclip{opacity:0}
 .nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;border:0;padding:0;background:transparent;
  font:inherit;font-size:11px;font-weight:600;color:var(--ink);cursor:pointer;border-radius:999px}
