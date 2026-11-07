@@ -10,16 +10,6 @@
 <meta name="theme-color" content="#141414">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1206x2622.png">
-<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1320x2868.png">
-<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1179x2556.png">
-<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1290x2796.png">
-<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1170x2532.png">
-<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1284x2778.png">
-<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1125x2436.png">
-<link rel="apple-touch-startup-image" media="(device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1260x2736.png">
-<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash-1242x2688.png">
-<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash-828x1792.png">
 <title>我的書櫃</title>
 <script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +19,7 @@
  --gap:0px;
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;--surf:#fff;
  --glass:rgba(255,255,255,.86);--solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
- --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;--pop:#fff;
+ --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
  --ph1:#5a5a5a;--ph2:#2b2b2b;--lg-bg:rgba(255,255,255,.36);--lg-bg2:rgba(255,255,255,.72);--lg-rim:rgba(255,255,255,.95);--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  color-scheme:light;
@@ -37,15 +27,15 @@
 :root[data-theme="dark"]{
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;--surf:#1f1f1f;
  --glass:rgba(24,24,24,.82);--solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
- --acc:#e50914;--acc2:#f6121d;--accink:#fff;--danger:#ff5f57;--stk:#333;--pop:#1f1f1f;
+ --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
  --ph1:#3a3a3a;--ph2:#1b1b1b;--lg-bg:rgba(30,30,32,.26);--lg-bg2:rgba(38,38,40,.62);--lg-rim:rgba(255,255,255,.24);--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-html{background:var(--bg1);min-height:100%}
-html,body{margin:0;min-height:100%}
+html{background:var(--bg1)}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",system-ui,sans-serif;color:var(--ink);background:transparent;line-height:1.5;-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(--gap));z-index:-1;pointer-events:none;background:var(--bg1)}
 .ic{display:block;flex:none}
@@ -55,7 +45,6 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
  backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);box-shadow:var(--shadow)}
 .pane.glass{background:var(--surf);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
 
-/* 底部懸浮列 */
 /* 頁面上下直接鋪滿，不做模糊或淡化；只有主畫面模式可視高度不足時（.short），底部補一條實色 */
 .edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
@@ -85,11 +74,9 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 :root:not([data-theme="dark"]) .dock .ind{box-shadow:inset 0 1px 2px rgba(0,0,0,.08)}
 .dock .ind.off{opacity:0}
 .nv{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border:0;padding:0;background:transparent;
- font:inherit;font-size:.72rem;font-weight:600;color:var(--ink);cursor:pointer;border-radius:999px;transition:color .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+ font:inherit;font-size:.72rem;font-weight:600;color:var(--ink);cursor:pointer;border-radius:999px;transition:color .2s}
 .nv .ic{width:26px;height:26px}
 .nv.on{color:var(--nav-on)}
-.nv{transition:color .2s,transform .4s cubic-bezier(.34,1.3,.5,1)}
-.nv{transition:color .2s,transform .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
 .nv.on>.ic{animation:nvpop .45s linear(0, 0.22 7%, 0.6 16%, 0.86 25%, 0.99 34%, 1.035 42%, 1.04 48%, 1.025 58%, 1.008 72%, 1)}
 @keyframes nvpop{0%{scale:.85}100%{scale:1}}
 .nv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -113,9 +100,9 @@ main.acts-on{padding-bottom:calc(184px + env(safe-area-inset-bottom,0px))}
 .ib.sm{width:32px;height:32px;color:var(--sub)}
 .ib.dng{color:var(--danger)}
 .ib.pri{background:var(--acc);color:var(--accink);box-shadow:0 4px 14px rgba(229,9,20,.35)}
+.ib.busy svg,.btn.busy svg{animation:rot .8s linear infinite}
 @keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
 
-html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 /* 像原生 App：長按不選字、不跳出複製選單或圖片／連結預覽（輸入框除外） */
 *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
@@ -299,7 +286,6 @@ main.still>*{animation:none}
 .editgrid .cvcol .cv{margin:0}
 @media(max-width:600px){.editgrid{grid-template-columns:1fr}.cvcol{width:150px;margin:0 auto}}
 .irow{display:flex;gap:8px;align-items:center}
-.ib.busy svg,.btn.busy svg{animation:rot .8s linear infinite}
 
 /* scan */
 .scan{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:4/3;box-shadow:var(--shadow)}
@@ -351,8 +337,8 @@ main.still>*{animation:none}
 <nav class="dock glass" id="dock"></nav>
 <script>
 // ===== 設定 =====
-// 書籍資料查詢代理。留空即可：在「設定」頁填入 Worker 網址後，會自動拿它來查詢 ISBN。
-const PROXY = "https://isbn-lookup.yus1ferwang.workers.dev/?code="; // 例："https://isbn-lookup.你的帳號.workers.dev/?code="
+// ISBN 查詢用的 Worker（例："https://isbn-lookup.你的帳號.workers.dev/?code="）。留空時改用「設定」頁填的 Worker 網址
+const PROXY="https://isbn-lookup.yus1ferwang.workers.dev/?code=";
 const ZX_URL="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js";
 
 // ===== 圖示 =====
@@ -360,7 +346,6 @@ const I={
  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
  plus:'<path d="M12 5v14M5 12h14"/>',
  back:'<path d="m15 18-6-6 6-6"/>',
- sliders:'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
  scan:'<path d="M3 8V6a3 3 0 0 1 3-3h2M16 3h2a3 3 0 0 1 3 3v2M21 16v2a3 3 0 0 1-3 3h-2M8 21H6a3 3 0 0 1-3-3v-2M8 8v8M12 8v8M16 8v8"/>',
  trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/>',
  check:'<path d="m5 12 5 5 9-9"/>',
@@ -780,13 +765,8 @@ const blank=()=>({id:"b"+Date.now().toString(36)+Math.random().toString(36).slic
 const tmo=(u,o={},ms=6000)=>{const c=new AbortController();setTimeout(()=>c.abort(),ms);return fetch(u,{...o,signal:c.signal})};
 // 日期統一成 YYYY/MM/DD（只有年月就補 01）
 const normDate=s=>{const m=String(s||"").match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/);return m?m[1]+"/"+m[2].padStart(2,"0")+"/"+(m[3]||"1").padStart(2,"0"):""};
-// 把 Worker 抓到的封面縮小再存（最寬 420px、JPEG），避免幾百本書把瀏覽器的 5MB 儲存空間塞滿，造成「封面消失」
 // Worker 回傳的封面是內嵌圖片（data URI）：不存進書裡，改由 ISBN 向 Worker 取圖；其他來源的網址型封面才保留
 const keepCover=c=>c&&!/^data:/.test(c)?c:"";
-const shrink=src=>new Promise(res=>{
- if(!/^data:image\//.test(src||"")||src.length<60000)return res(src);
- const im=new Image();im.onload=()=>{try{const s=Math.min(1,420/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);const o=c.toDataURL("image/jpeg",.78);res(o.length<src.length?o:src)}catch(e){res(src)}};
- im.onerror=()=>res(src);im.src=src});
 const imgOK=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i.naturalWidth>40);i.onerror=()=>r(false);i.src=u});
 const lookupBase=()=>PROXY||(cfg.url?cfg.url.replace(/\/+$/,"")+"/?code=":"");
 const SRC=[
@@ -842,7 +822,6 @@ async function found(isbn){
  draft._miss=!r;draft._off=offline();go("#/edit/new");
 }
 
-// ===== 書籍詳情／入庫確認 =====
 // ===== 書籍詳情（只看，不直接編輯）=====
 function view(b){
  if(!b){go("#/",true);return}
@@ -905,7 +884,7 @@ function edit(b,isNew){
   if((curCat===""||curCat===auto.cat)&&gs.cat){curCat=gs.cat;auto.cat=gs.cat}
   renderCats();fillAuthor();
  };
-const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.edition,(c.get(x.edition)||0)+1)});
+ const edList=()=>{const c=new Map();books.forEach(x=>{if(x.edition)c.set(x.edition,(c.get(x.edition)||0)+1)});
   const base=["首刷限定版","首刷書腰版","首刷附錄版","首刷版","特裝版","限定版","豪華版"];
   return [...new Set([...[...c.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]),...base])].slice(0,10)};
  const renderEds=()=>{const cur=g("edition").value.trim();$("#eds").innerHTML=edList().map(e=>`<button type="button" class="chip${cur===e?" on":""}" data-ed="${esc(e)}">${esc(e)}</button>`).join("")};
@@ -1020,13 +999,11 @@ function me(){
  setTitle("關於我的書櫃");
  const gs=groups(),multi=gs.filter(x=>x.l.length>1).length;
  const {total,priced}=sumPrice(books);
- const day=t=>{const d=new Date(t);return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")};
  const feats=[["scan","掃描入庫","對準書背的 ISBN 條碼，書名、作者、定價與封面自動帶入；開啟快速入庫，可以一本接一本連續掃。"],
   ["book","自動歸類","從書名判斷系列、集數與分類，同一套書自動排在一起；首刷限定版、特裝版也會標成版本。"],
   ["refresh","跨裝置同步","iPhone、iPad、電腦填同一組同步密碼，書架會自動合併成同一份。"],
   ["search","隨手查找","用書名、作者或 ISBN 搜尋，逛書店時先確認這本有沒有買過。"]];
- app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1>
-</section>
+ app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1></section>
  <div class="mstats">
   <div class="mstat"><div class="l">藏書量</div><div class="n">${books.length.toLocaleString()}<small>本</small></div></div>
   <div class="mstat"><div class="l">系列數量</div><div class="n">${gs.length.toLocaleString()}<small>個</small></div><div class="d">多集系列 ${multi}・單本 ${gs.length-multi}</div></div>
@@ -1095,7 +1072,6 @@ function settings(){
  document.addEventListener("touchmove",e=>{
   if(e.touches.length>1){e.preventDefault();return}
   const t=e.target;if(!t.closest)return;
-  if(t.closest(".dlg-p textarea,textarea")&&false)return;
   const m=t.closest("main");if(!m){e.preventDefault();return}
   const dy=e.touches[0].clientY-y0,dx=e.touches[0].clientX-x0;
   if(Math.abs(dx)>Math.abs(dy)&&t.closest(".rail,.strip"))return;
