@@ -69,7 +69,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 @property --g{syntax:"<number>";inherits:true;initial-value:0}
 .dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
 /* 導航欄與操作列：中灰玻璃（上緣略亮），在純黑背景上也看得出形狀；選中膠囊比底色深 */
-.dock.glass,.pacts{background:var(--bar-bg);backdrop-filter:blur(4px) saturate(1.5);-webkit-backdrop-filter:blur(4px) saturate(1.5)}
+.dock.glass,.pacts{background:var(--bar-bg);backdrop-filter:blur(2px) saturate(1.5);-webkit-backdrop-filter:blur(2px) saturate(1.5)}
 .dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
@@ -540,11 +540,11 @@ const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=380,c=30,live=false;
  const apply=()=>{const d=el(),sx=Math.max(1,s),sy=s<1?Math.min(1.25,1+(1-s)*1.4):1;
   d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
  const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;
-  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/1800,.2);sv+=(520*(ts-s)-13*sv)*h;s+=sv*h}
+  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(900*(ts-s)-17*sv)*h;s+=sv*h}
   apply();
   if(!live&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002&&Math.abs(sv)<.02){x=t;v=0;s=1;sv=0;apply();raf=0;return}
   raf=requestAnimationFrame(step)};
- return{to(nt,o={}){t=nt;live=!!o.drag;k=o.drag?900:380;c=o.drag?48:30;
+ return{to(nt,o={}){t=nt;live=!!o.drag;k=o.drag?1400:520;c=o.drag?56:34;
   if(o.instant||still()){x=t;v=0;s=1;sv=0;apply();cancelAnimationFrame(raf);raf=0;return}
   if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
