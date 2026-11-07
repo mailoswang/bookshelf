@@ -17,6 +17,8 @@
 <style>
 :root{
  --gap:0px;
+ /* 導航欄離螢幕底部的距離：跟 iOS 原生分頁列一樣，底邊離螢幕底約 21pt（稍微壓進底部橫條區）；沒有底部橫條的裝置留 8px */
+ --navb:max(8px,calc(env(safe-area-inset-bottom,0px) - 13px));
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
@@ -57,7 +59,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
-.dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(env(safe-area-inset-bottom,0px) + 6px + var(--kb,0px));z-index:30;
+.dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(var(--navb) + var(--kb,0px));z-index:30;
  width:min(calc(100% - 42px),380px);height:62px;padding:4px 10px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
  touch-action:none;--x:calc(var(--i,0)*var(--sw,0px));transition:scale .32s var(--spring),--x .41s var(--spring-nav),--g .32s var(--spring);will-change:scale}
 /* 膠囊的位置（--x）與浮起程度（--g）都是可動畫的變數：膠囊、膠囊內的紅色圖示、白色圖示的遮罩共用同一組值，每一幀都對齊 */
@@ -110,7 +112,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock.syncing [data-dk="cfg"]::after{animation:pulse 1s ease-in-out infinite}
 .dock.err [data-dk="cfg"]::after{background:var(--acc)}
 /* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
-.pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 78px + var(--kb,0px));z-index:29;
+.pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navb) + 72px + var(--kb,0px));z-index:29;
  width:min(calc(100% - 42px),380px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important}
 .pacts .btn{flex:1 1 0;min-width:0;justify-content:center;gap:6px;border-radius:999px;border:0;background:transparent;padding:0 6px;font-size:.9rem;white-space:nowrap}
 .pacts .btn span{overflow:hidden;text-overflow:ellipsis}
