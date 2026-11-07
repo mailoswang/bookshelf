@@ -65,7 +65,9 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
  /* 膠囊幾何：--x 位置、--sx/--sy 果凍伸縮（由 JS 彈簧驅動）、--g 浮起程度（CSS 動畫）。膠囊、紅色複本、圖示遮罩都讀這組值，每一幀都對齊 */
  --pw0:calc(var(--sw,0px) + 12px + var(--g)*18px);--ph0:calc(54px + var(--g)*17px);
  --pw:calc(var(--pw0)*var(--sx,1));--ph:calc(var(--ph0)*var(--sy,1));
- --pl:calc(4px - var(--g)*9px + var(--x,0px) + (var(--pw0) - var(--pw))/2);--pt:calc(31px - var(--ph)/2)}
+ /* 拉長時以中心往兩邊長，但左右夾在「最左／最右那格本來的位置」之內：兩端的格子拉長時往內側長，不會超出導航欄或螢幕 */
+ --plo:calc(4px - var(--g)*9px);
+ --pl:clamp(var(--plo),calc(var(--plo) + var(--x,0px) + (var(--pw0) - var(--pw))/2),calc(var(--dw,0px) - var(--plo) - var(--pw)));--pt:calc(31px - var(--ph)/2)}
 @property --g{syntax:"<number>";inherits:true;initial-value:0}
 .dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
 /* 導航欄與操作列：中灰玻璃（上緣略亮），在純黑背景上也看得出形狀；選中膠囊比底色深 */
@@ -533,18 +535,18 @@ const navSW=()=>($("#dock").offsetWidth-20)/4;
 function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px");el.style.setProperty("--dw",el.offsetWidth+"px")}
 addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
 // 膠囊的果凍彈簧：位置用彈簧追目標（拖動時追手指，較硬），每幀算出速度；
-// 速度越快橫向拉得越長，拉伸量本身再用一個較 Q 的彈簧追，急停時回彈過頭變成上下撐高的擠壓，晃幾下回到原狀
+// 速度越快橫向拉得越長，拉伸量本身再用一個柔和的彈簧追（阻尼約 0.45）：停下時只回彈一次成上下撐高的擠壓，就回到原狀
 const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=380,c=30,live=false;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
  // 只往外長、不縮小：拉伸時變寬（高度不變），回彈擠壓時改成變高，膠囊永遠不小於原本大小
  const apply=()=>{const d=el(),sx=Math.max(1,s),sy=s<1?Math.min(1.25,1+(1-s)*1.4):1;
   d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
  const step=now=>{const dt=Math.min(.034,(now-last)/1000||.016);last=now;
-  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(900*(ts-s)-17*sv)*h;s+=sv*h}
+  for(let i=0,h=dt/4;i<4;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(480*(ts-s)-20*sv)*h;s+=sv*h}
   apply();
   if(!live&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002&&Math.abs(sv)<.02){x=t;v=0;s=1;sv=0;apply();raf=0;return}
   raf=requestAnimationFrame(step)};
- return{to(nt,o={}){t=nt;live=!!o.drag;k=o.drag?1400:520;c=o.drag?56:34;
+ return{to(nt,o={}){t=nt;live=!!o.drag;k=o.drag?1400:420;c=o.drag?70:38;
   if(o.instant||still()){x=t;v=0;s=1;sv=0;apply();cancelAnimationFrame(raf);raf=0;return}
   if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
