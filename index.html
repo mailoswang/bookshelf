@@ -64,7 +64,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
  touch-action:none;transition:scale .5s cubic-bezier(.22,.8,.3,1),--g .5s cubic-bezier(.22,.8,.3,1);will-change:scale;
  /* 膠囊幾何：--x 位置、--sx/--sy 果凍伸縮（由 JS 彈簧驅動）、--g 浮起程度（CSS 動畫）。膠囊、紅色複本、圖示遮罩都讀這組值，每一幀都對齊 */
  --pw0:calc(var(--sw,0px) + 12px + var(--g)*18px);--ph0:calc(54px + var(--g)*17px);
- --pw:calc(var(--pw0)*var(--sx,1));--ph:calc(var(--ph0)*var(--sy,1));
+ --pw:calc(var(--pw0)*var(--sx,1) - var(--cmp,0px));--ph:calc(var(--ph0)*var(--sy,1));
  /* 拉長時以中心往兩邊長，但左右夾在「最左／最右那格本來的位置」之內：兩端的格子拉長時往內側長，不會超出導航欄或螢幕 */
  --plo:calc(4px - var(--g)*9px);
  --pl:clamp(var(--plo),calc(var(--plo) + var(--x,0px) + (var(--pw0) - var(--pw))/2),calc(var(--dw,0px) - var(--plo) - var(--pw)));--pt:calc(31px - var(--ph)/2)}
@@ -546,16 +546,21 @@ addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})}
 const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vmax=0,sq=null,armed=false,onArrive=null;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
  // 只往外長、不縮小：拉伸時變寬（高度不變），擠壓時變高
- const apply=sy=>{const d=el();d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",Math.max(1,s).toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
+ // 煞車擠壓 cmp：寬度少 cmp，位置往靠邊那側挪 cmp/2，所以靠邊那側不動、後面那側往內縮
+ const apply=(sy,cmp=0,side=0,sx=Math.max(1,s))=>{const d=el();d.style.setProperty("--cmp",cmp.toFixed(2)+"px");d.style.setProperty("--x",(x+side*cmp/2).toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
  // 照實際經過的時間補算（掉幀時直接跳到該在的位置，不會整段被拖慢）；細分成每步 4ms 以內，彈簧才穩定
  const step=now=>{const dt=Math.min(.1,(now-last)/1000||.016),n=Math.ceil(dt/.004);last=now;
   for(let i=0,h=dt/n;i<n;i++){v+=(k*(t-x)-c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/900,.22);sv+=(110*(ts-s)-21*sv)*h;s+=sv*h}
   const av=Math.abs(v);if(armed&&av>vmax)vmax=av;
   // 一開始減速（速度掉到最高速的一半）就播一次擠壓，跟橫向縮回同時發生：上下撐開，幅度依最高速度，最多 1.07 倍
   // 1 秒：前 30% 平順撐起，後 70% 慢慢收回（漸慢），頭尾都平緩；每次移動只播一次
-  if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;sq={t0:now,a:Math.min(.07,Math.min(vmax/900,.22)*.35)};vmax=0}
-  let sy=1;if(sq){const p=(now-sq.t0)/1000;if(p>=1)sq=null;else{const q=p<.3?Math.sin(Math.PI/2*p/.3):Math.cos(Math.PI/2*(p-.3)/.7);sy=1+sq.a*q*q}}
-  apply(sy);
+  if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;const side=t<1?-1:t>3*navSW()-1?1:0;sq={t0:now,a:Math.min(.07,Math.min(vmax/900,.22)*.35),c:side?Math.min(16,vmax/100):0,side};vmax=0}
+  let sy=1,cmp=0,side=0,sxv=Math.max(1,s);if(sq){const p=(now-sq.t0)/1000;if(p>=1)sq=null;else{const q=p<.3?Math.sin(Math.PI/2*p/.3):Math.cos(Math.PI/2*(p-.3)/.7);sy=1+sq.a*q*q;
+   // 衝到兩端像煞車：靠邊那側不動，後面那側前 15% 快速往內縮、之後約 0.55 秒慢慢彈回
+   if(sq.c){const r=p<.15?Math.sin(Math.PI/2*p/.15):Math.cos(Math.PI/2*Math.min(1,(p-.15)/.55));cmp=sq.c*r*r;side=sq.side;
+    // 煞車把衝刺的橫向拉伸吃掉：擠壓越深，拉伸收得越多
+    if(p<.15)sq.m=Math.max(sq.m||0,r);sxv=1+(sxv-1)*(1-(sq.m||0))}}}
+  apply(sy,cmp,side,sxv);
   if(onArrive&&Math.abs(t-x)<6){const f=onArrive;onArrive=null;f()}
   if(!live&&!sq&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002){x=t;v=0;s=1;sv=0;vmax=0;armed=false;apply(1);raf=0;return}
   raf=requestAnimationFrame(step)};
@@ -1187,8 +1192,8 @@ setTimeout(vpCheck,100);
   skip=performance.now()+800;
   el.classList.remove("drag");
   const drop=()=>setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)));
-  // 換頁：等膠囊到位才換、浮起狀態也那時才收回，滑動、收回、換頁不會全擠在同一刻
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},140);navTap=id!=="back";navActs[id]&&navActs[id]()})}
+  // 換頁：等膠囊到位才換；浮起狀態再晚 0.38 秒（煞車擠壓大致做完）才收回，滑動、煞車、收回依序發生
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},380);navTap=id!=="back";navActs[id]&&navActs[id]()})}
   else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home();drop()}};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
