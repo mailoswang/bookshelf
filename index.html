@@ -61,7 +61,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：Netflix 版型 + 液態玻璃（霧面、邊緣高光、會彈性滑動的玻璃膠囊）===== */
 .dock{position:fixed;left:50%;translate:-50% 0;bottom:calc(var(--navb) + var(--kb,0px));z-index:30;
  width:min(calc(100% - 42px),380px);height:62px;padding:4px 10px;border-radius:999px;display:grid;grid-template-columns:repeat(4,1fr);isolation:isolate;
- touch-action:none;transition:scale .5s cubic-bezier(.22,.8,.3,1),--g .5s cubic-bezier(.22,.8,.3,1);will-change:scale;
+ touch-action:none;transition:scale .42s cubic-bezier(.22,.8,.3,1),--g .42s cubic-bezier(.22,.8,.3,1);will-change:scale;
  /* 膠囊幾何：--x 位置、--sx/--sy 果凍伸縮（由 JS 彈簧驅動）、--g 浮起程度（CSS 動畫）。膠囊、紅色複本、圖示遮罩都讀這組值，每一幀都對齊 */
  --pw0:calc(var(--sw,0px) + 12px + var(--g)*18px);--ph0:calc(54px + var(--g)*17px);
  --pw:calc(var(--pw0)*var(--sx,1) - var(--cmp,0px));--ph:calc(var(--ph0)*var(--sy,1));
@@ -1192,8 +1192,8 @@ setTimeout(vpCheck,100);
   skip=performance.now()+800;
   el.classList.remove("drag");
   const drop=()=>setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)));
-  // 換頁：等膠囊到位才換；浮起狀態再晚 0.38 秒（煞車擠壓大致做完）才收回，滑動、煞車、收回依序發生
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},380);navTap=id!=="back";navActs[id]&&navActs[id]()})}
+  // 換頁：等膠囊到位才換；浮起狀態再晚 0.25 秒（煞車擠壓最深之後）才收回，滑動、煞車、收回依序發生
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},250);navTap=id!=="back";navActs[id]&&navActs[id]()})}
   else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home();drop()}};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
