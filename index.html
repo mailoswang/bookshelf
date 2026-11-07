@@ -20,7 +20,7 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  /* 液態玻璃（數值取自 liquidglass.dev 預設）：色調、兩級陰影、左上受光的邊緣高光、彈簧；霧化一律 blur(16px) saturate(1.6) */
  --gl:rgba(255,255,255,.5);--gl2:rgba(255,255,255,.5);--lg-tint:rgba(255,255,255,.5);--lg-ind:rgba(255,255,255,.6);
@@ -35,7 +35,7 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;
  --solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  --gl:rgba(255,255,255,.08);--gl2:rgba(255,255,255,.14);--lg-tint:rgba(17,24,39,.32);--lg-ind:rgba(255,255,255,.14);
  --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.5),inset -1px -1px 0 -.5px rgba(255,255,255,.16),inset 0 0 0 .5px rgba(255,255,255,.06);
@@ -74,7 +74,10 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .dock .ind{z-index:-1;background:var(--nav-ind);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08),var(--lg-sh1);transition:opacity .2s,background .2s,box-shadow .2s}
 /* 按住導航欄：整條微微放大，膠囊浮起成一塊略超出導航欄、邊緣有高光的透明玻璃 */
 .dock.lift{scale:1.04;--g:1}
-.dock.lift .ind{background:var(--lg-ind);box-shadow:var(--spec),var(--lg-sh2)}
+/* 浮起的膠囊：上亮下暗的光澤、一圈亮邊加一圈暗邊（深淺背景都看得到）、左上強高光、內側微光、較深的投影 */
+.dock.lift .ind{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 55%,rgba(255,255,255,.1)),var(--lift-bg);
+ box-shadow:inset 0 0 0 1px var(--lift-ring),inset 1.5px 2px 0 -.5px rgba(255,255,255,.9),inset -1px -1.5px 0 -.5px rgba(255,255,255,.4),
+  inset 0 0 14px rgba(255,255,255,.14),0 0 0 .5px var(--lift-edge),0 8px 22px var(--lift-sh),0 2px 6px rgba(0,0,0,.18)}
 /* 膠囊蓋到哪裡，那裡的圖示就變紅：紅色複本裁在膠囊裡，同一段的白色圖示用遮罩挖掉 */
 .dock .pclip{z-index:2;overflow:hidden;pointer-events:none}
 .nvc{position:absolute;left:calc(var(--g)*9px - 4px - var(--x));top:calc(var(--g)*8.5px - 4px);width:var(--dw,0px);height:62px;
@@ -563,10 +566,16 @@ function route(){
  const r1=to.getBoundingClientRect();
  ghost.classList.add("ghost");ghost.removeAttribute("id");
  Object.assign(ghost.style,{left:r0.left+"px",top:r0.top+"px",width:r0.width+"px",height:r0.height+"px",aspectRatio:"auto"});
- document.body.appendChild(ghost);to.style.visibility="hidden";
+ // 封面上的標籤（新加入、第 N 集）跟著封面一起藏住，落地後新加入從封面底部往上滑入、集數淡入
+ const tags=[...(to.closest(".cv")||to).querySelectorAll(".ribbon,.badge")];
+ document.body.appendChild(ghost);to.style.visibility="hidden";tags.forEach(t=>t.style.visibility="hidden");
  const anim=ghost.animate([{transform:"none"},{transform:`translate(${r1.left-r0.left}px,${r1.top-r0.top}px) scale(${r1.width/r0.width},${r1.height/r0.height})`}],
   {duration:500,easing:"cubic-bezier(.3,1.12,.4,1)",fill:"forwards"});
- const end=()=>{to.style.visibility="";ghost.remove();if(flight===end)flight=null};
+ let ended=false;
+ const end=()=>{if(ended)return;ended=true;to.style.visibility="";ghost.remove();if(flight===end)flight=null;
+  tags.forEach(t=>{t.style.visibility="";if(!t.isConnected)return;
+   t.animate(t.classList.contains("ribbon")?[{transform:"translateY(100%)",clipPath:"inset(0 0 100% 0)"},{transform:"none",clipPath:"inset(0)"}]:[{opacity:0},{opacity:1}],
+    {duration:280,easing:"cubic-bezier(.2,.8,.2,1)",fill:"backwards"})})};
  // 動畫結束就收尾；萬一結束通知沒來，0.7 秒後也一定收尾，封面不會一直藏著
  flight=end;anim.finished.then(end,end);setTimeout(end,700);
 }
