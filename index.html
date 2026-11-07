@@ -536,7 +536,7 @@ function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px")
 addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
 // 膠囊的果凍動畫：位置用不過衝的彈簧追目標（拖動時追手指，較硬），每幀算出速度；
 // 拉伸用臨界阻尼的彈簧跟著速度平順變長變短（不會縮過頭）；開始減速時再主動播放一次「上下撐開再回來」的擠壓，只有這一下
-const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vmax=0,sq=null,armed=false;
+const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vmax=0,sq=null,armed=false,onArrive=null;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
  // 只往外長、不縮小：拉伸時變寬（高度不變），擠壓時變高
  const apply=sy=>{const d=el();d.style.setProperty("--x",x.toFixed(2)+"px");d.style.setProperty("--sx",Math.max(1,s).toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
@@ -548,10 +548,14 @@ const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,k=420,c=38,live=false,vma
   if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;sq={t0:now,a:Math.min(.15,Math.min(vmax/900,.22)*.7)};vmax=0}
   let sy=1;if(sq){const p=(now-sq.t0)/320;if(p>=1)sq=null;else sy=1+sq.a*Math.sin(Math.PI*Math.pow(p,.7))}
   apply(sy);
+  if(onArrive&&Math.abs(t-x)<6){const f=onArrive;onArrive=null;f()}
   if(!live&&!sq&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002){x=t;v=0;s=1;sv=0;vmax=0;armed=false;apply(1);raf=0;return}
   raf=requestAnimationFrame(step)};
- return{to(nt,o={}){t=nt;live=!!o.drag;armed=true;k=o.drag?1400:420;c=o.drag?70:38;
-  if(o.instant||still()){x=t;v=0;s=1;sv=0;vmax=0;sq=null;armed=false;apply(1);cancelAnimationFrame(raf);raf=0;return}
+ return{
+  // 膠囊滑到目標附近再做事（例如換頁）：重建頁面很吃效能，等膠囊到位再做才不會卡住動畫；最多等 ms 毫秒
+  arrive(f,ms=300){if(!raf||Math.abs(t-x)<6){f();return}let done=false;const g=()=>{if(!done){done=true;onArrive=null;f()}};onArrive=g;setTimeout(g,ms)},
+  to(nt,o={}){t=nt;live=!!o.drag;armed=true;k=o.drag?1400:420;c=o.drag?70:38;
+  if(o.instant||still()){x=t;v=0;s=1;sv=0;vmax=0;sq=null;armed=false;apply(1);cancelAnimationFrame(raf);raf=0;if(onArrive){const f=onArrive;onArrive=null;f()}return}
   if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
@@ -1173,7 +1177,7 @@ setTimeout(vpCheck,100);
  const done=ok=>{if(!st)return;const s=st;st=null;cancelAnimationFrame(raf);
   skip=performance.now()+800;
   el.classList.remove("drag");
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;navTap=id!=="back";navActs[id]&&navActs[id]()}
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{navTap=id!=="back";navActs[id]&&navActs[id]()})}
   else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home()}
   setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(80,240-(performance.now()-s.t0)))};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
