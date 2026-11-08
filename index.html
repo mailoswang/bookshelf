@@ -541,41 +541,36 @@ let navCur=0;
 const navSW=()=>($("#dock").offsetWidth-20)/4;
 function navSize(){const el=$("#dock");el.style.setProperty("--sw",navSW()+"px");el.style.setProperty("--dw",el.offsetWidth+"px")}
 addEventListener("resize",()=>{navSize();pill.to(navCur*navSW(),{instant:true})});
-// 膠囊的果凍動畫：位置用臨界阻尼彈簧追目標（不過衝、指哪停哪），每幀算出速度；拉伸跟著速度平順變長再收回；
-// 減速時播一次「上下撐開再回來」的擠壓，只有這一下。輕按（tap）用快而輕的一組參數，拖動（drag）跟手、變形較明顯
-const PM={tap:{k:1200,c:69,sk:420,sc:41,sv:3000,smax:.1,sa:.008,dur:460,cmax:24,cdiv:70},
- drag:{k:1400,c:70,sk:300,sc:34.6,sv:1100,smax:.2,sa:.06,dur:620,cmax:20,cdiv:80}};
-const pill=(()=>{let x=0,v=0,t=0,s=1,sv=0,raf=0,last=0,m=PM.tap,live=false,vmax=0,sq=null,armed=false,onArrive=null,dragArm=false,vdir=0;
+// 膠囊的果凍動畫：前緣、後緣各自用彈簧帶動。
+// 前緣（往前進方向那側）用不過衝的柔和彈簧追目標，慢慢停在該停的地方（指哪停哪）；
+// 後緣用較有彈性的彈簧追前緣：起步時落後（拉長），前緣停下時衝上去撞進來（煞車擠壓），再回彈一下就停。
+// 擠壓時上下微微撐開（像體積被擠到上下），短距離移動擠壓小、撐開也小
+const PM={tap:{k:420,c:41,kt:200,ct:12,S:16,C:32,bulge:.0013},
+ drag:{k:1400,c:70,kt:220,ct:13,S:24,C:24,bulge:.002}};
+const pill=(()=>{let P=0,vP=0,T=0,vT=0,t=0,dir=1,wd=0,calm=false,raf=0,last=0,m=PM.tap,live=false,onArrive=null;
  const el=()=>$("#dock"),still=()=>matchMedia("(prefers-reduced-motion: reduce)").matches;
- // 只往外長、不縮小：拉伸時變寬（高度不變），擠壓時變高
- // 煞車擠壓 cmp：寬度少 cmp，位置往靠邊那側挪 cmp/2，所以靠邊那側不動、後面那側往內縮
- const apply=(sy,cmp=0,side=0,sx=Math.max(1,s))=>{const d=el();d.style.setProperty("--cmp",cmp.toFixed(2)+"px");d.style.setProperty("--x",(x+side*cmp/2).toFixed(2)+"px");d.style.setProperty("--sx",sx.toFixed(4));d.style.setProperty("--sy",sy.toFixed(4))};
- // 擠壓幅度依這次最高速度，上限看是輕按還是拖動
- const brake=(now,side)=>({t0:now,a:Math.min(m.sa,vmax/2e4),c:side?Math.min(m.cmax,vmax/m.cdiv):0,side,dur:m.dur});
- // 照實際經過的時間補算（掉幀時直接跳到該在的位置，不會整段被拖慢）；細分成每步 4ms 以內，彈簧才穩定
- const step=now=>{const dt=Math.min(.1,(now-last)/1000||.016),n=Math.ceil(dt/.004);last=now;
-  for(let i=0,h=dt/n;i<n;i++){v+=(m.k*(t-x)-m.c*v)*h;x+=v*h;const ts=1+Math.min(Math.abs(v)/m.sv,m.smax);sv+=(m.sk*(ts-s)-m.sc*sv)*h;s+=sv*h}
-  const av=Math.abs(v);if(armed&&av>vmax)vmax=av;if(av>150)vdir=Math.sign(v);
-  // 拖動中減速（掉到這次最高速的 4 成以下）也煞車一次：前進方向那側不動、後面那側往內縮；要再加速才會再觸發
-  if(live){if(av>300)dragArm=true;if(dragArm&&vmax>300&&av<vmax*.4){dragArm=false;sq=brake(now,vdir);vmax=0}}
-  // 一開始減速（速度掉到最高速的一半）就播一次擠壓；到兩端時再加上煞車（靠邊那側不動、後面那側內縮）
-  if(armed&&!live&&vmax>120&&(av<vmax*.5||Math.abs(t-x)<1)){armed=false;sq=brake(now,t<1?-1:t>3*navSW()-1?1:0);vmax=0}
-  let sy=1,cmp=0,side=0,sxv=Math.max(1,s);if(sq){const p=(now-sq.t0)/sq.dur;if(p>=1)sq=null;else{
-   // 上下撐開：前 25% 平順撐起、後面漸慢收回
-   const q=p<.25?Math.sin(Math.PI/2*p/.25):Math.cos(Math.PI/2*(p-.25)/.75);sy=1+sq.a*q*q;
-   if(sq.c){const r=p<.18?Math.sin(Math.PI/2*p/.18):Math.cos(Math.PI/2*(p-.18)/.82);cmp=sq.c*r*r;side=sq.side;
-    // 煞車把衝刺的橫向拉伸吃掉：擠壓越深，拉伸收得越多
-    if(p<.18)sq.m=Math.max(sq.m||0,r);sxv=1+(sxv-1)*(1-(sq.m||0))}}}
-  apply(sy,cmp,side,sxv);
-  if(onArrive&&Math.abs(t-x)<6){const f=onArrive;onArrive=null;f()}
-  if(!live&&!sq&&Math.abs(t-x)<.3&&Math.abs(v)<4&&Math.abs(s-1)<.002){x=t;v=0;s=1;sv=0;vmax=0;armed=false;apply(1);raf=0;return}
+ // 寬度變化 wd（正＝拉長、負＝擠壓）用平滑上限壓住，不會長太誇張；前緣固定在 P，後緣在 P−dir·wd
+ const apply=()=>{const d=el(),sy=1+Math.max(0,-wd)*m.bulge;
+  d.style.setProperty("--cmp",(-wd).toFixed(2)+"px");d.style.setProperty("--x",(P-dir*wd/2).toFixed(2)+"px");d.style.setProperty("--sx","1");d.style.setProperty("--sy",sy.toFixed(4))};
+ // 照實際經過的時間補算（掉幀時直接跳到該在的位置，不會整段被拖慢）；細分成每步 2ms 以內，彈簧才穩定
+ const step=now=>{const dt=Math.min(.1,(now-last)/1000||.016),n=Math.ceil(dt/.002);last=now;
+  for(let i=0,h=dt/n;i<n;i++){vP+=(m.k*(t-P)-m.c*vP)*h;P+=vP*h;
+   // 只彈一次：擠到最深、開始彈回的那一刻起，後緣改用不過衝的阻尼，平順回到原本寬度，不會再拉長、再擠壓
+   const g=(P-T)*dir;if(!calm&&g<0&&(vP-vT)*dir>0)calm=true;if(calm&&live&&g>2)calm=false;
+   vT+=(m.kt*(P-T)+(calm?2*Math.sqrt(m.kt)*(vP-vT):-m.ct*vT))*h;T+=vT*h}
+  // 拖動時前進方向跟著手指變；換方向時寬度平順過渡，不會跳
+  if(live&&Math.abs(vP)>200)dir=Math.sign(vP);
+  const raw=(P-T)*dir,tw=raw>0?m.S*Math.tanh(raw/m.S):m.C*Math.tanh(raw/m.C);
+  wd+=(tw-wd)*Math.min(1,dt*(live?30:60));
+  apply();
+  if(onArrive&&Math.abs(t-P)<6){const f=onArrive;onArrive=null;f()}
+  if(!live&&Math.abs(t-P)<.3&&Math.abs(vP)<4&&Math.abs(P-T)<1&&Math.abs(vT)<15){P=T=t;vP=vT=0;wd=0;apply();raf=0;return}
   raf=requestAnimationFrame(step)};
  return{
   // 膠囊滑到目標附近再做事（例如換頁）：重建頁面很吃效能，等膠囊到位再做才不會卡住動畫；最多等 ms 毫秒
-  arrive(f,ms=240){if(!raf||Math.abs(t-x)<6){f();return}let done=false;const g=()=>{if(!done){done=true;onArrive=null;f()}};onArrive=g;setTimeout(g,ms)},
-  // 目標沒變（例如換頁後重繪導航欄又定位一次）就不重新觸發擠壓
-  to(nt,o={}){if(Math.abs(nt-t)>.5||o.drag)armed=true;t=nt;live=!!o.drag;m=o.drag?PM.drag:PM.tap;
-  if(o.instant||still()){x=t;v=0;s=1;sv=0;vmax=0;sq=null;armed=false;apply(1);cancelAnimationFrame(raf);raf=0;if(onArrive){const f=onArrive;onArrive=null;f()}return}
+  arrive(f,ms=320){if(!raf||Math.abs(t-P)<6){f();return}let done=false;const g=()=>{if(!done){done=true;onArrive=null;f()}};onArrive=g;setTimeout(g,ms)},
+  to(nt,o={}){if(!o.drag&&Math.abs(nt-t)>.5){dir=Math.sign(nt-P)||dir;calm=false}t=nt;live=!!o.drag;m=o.drag?PM.drag:PM.tap;
+  if(o.instant||still()){P=T=t;vP=vT=0;wd=0;apply();cancelAnimationFrame(raf);raf=0;if(onArrive){const f=onArrive;onArrive=null;f()}return}
   if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}})();
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
@@ -1199,7 +1194,7 @@ setTimeout(vpCheck,100);
   el.classList.remove("drag");
   const drop=()=>setTimeout(()=>{if(!st)el.classList.remove("lift")},Math.max(60,180-(performance.now()-s.t0)));
   // 換頁：等膠囊到位才換，緊接著收回浮起狀態，滑動、煞車、收回一氣呵成
-  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},90);navTap=id!=="back";navActs[id]&&navActs[id]()})}
+  if(ok&&s.k!==s.cur){navCur=s.k;pill.to(s.k*s.w);const id=s.nvs[s.k].dataset.dk;pill.arrive(()=>{setTimeout(()=>{if(!st)el.classList.remove("lift")},120);navTap=id!=="back";navActs[id]&&navActs[id]()})}
   else{if(s.cur>=0)pill.to(s.cur*s.w);if(ok&&!s.moved&&s.nvs[s.k].dataset.dk==="home")navActs.home();drop()}};
  el.addEventListener("pointerdown",e=>{const b=e.target.closest(".nv");if(!b||st)return;
   const nvs=[...el.querySelectorAll(".nv")],i=nvs.indexOf(b);
