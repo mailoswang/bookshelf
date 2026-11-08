@@ -22,11 +22,15 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--bar-bg:var(--lg-tint);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--bar-bg:var(--lg-grad),rgba(255,255,255,.42);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  /* 液態玻璃（數值取自 liquidglass.dev 預設）：色調、兩級陰影、左上受光的邊緣高光、彈簧；霧化一律 blur(16px) saturate(1.6) */
  --gl:rgba(255,255,255,.5);--gl2:rgba(255,255,255,.5);--lg-tint:rgba(255,255,255,.5);--lg-ind:rgba(255,255,255,.6);
  --lg-sh1:0 1px 3px rgba(0,0,0,.08);--lg-sh2:0 4px 12px rgba(0,0,0,.1);
+ /* 外觀參考 liquid-glass-js：由上往下白→灰的染色、越靠邊越亮的一圈邊緣光（模擬邊緣折射）、柔和的大投影 */
+ --lg-grad:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.1) 45%,rgba(179,179,179,.16));
+ --rim:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 0 4px rgba(255,255,255,.45),inset 0 0 14px rgba(255,255,255,.2);
+ --lg-drop:0 10px 28px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);
  --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.95),inset -1px -1px 0 -.5px rgba(255,255,255,.6),inset 0 0 0 .5px rgba(0,0,0,.06);
  --spring:linear(0, 0.044 4%, 0.150 8%, 0.285 12%, 0.428 17%, 0.563 21%, 0.684 25%, 0.784 29%, 0.865 33%, 0.926 38%, 0.970 42%, 1.000 46%, 1.019 50%, 1.029 54%, 1.033 58%, 1.033 62%, 1.030 67%, 1.026 71%, 1.021 75%, 1.016 79%, 1.012 83%, 1.008 88%, 1.006 92%, 1.003 96%, 1);
  --spring-nav:linear(0, 0.046 4%, 0.153 8%, 0.290 12%, 0.432 17%, 0.565 21%, 0.682 25%, 0.779 29%, 0.856 33%, 0.915 38%, 0.958 42%, 0.987 46%, 1.005 50%, 1.016 54%, 1.021 58%, 1.023 62%, 1.022 67%, 1.019 71%, 1.016 75%, 1.013 79%, 1.010 83%, 1.007 88%, 1.005 92%, 1.003 96%, 1);
@@ -37,9 +41,12 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;
  --solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--bar-bg:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 55%),rgba(86,86,90,.58);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--bar-bg:var(--lg-grad),rgba(86,86,90,.55);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  --gl:rgba(255,255,255,.08);--gl2:rgba(255,255,255,.14);--lg-tint:rgba(17,24,39,.32);--lg-ind:rgba(255,255,255,.14);
+ --lg-grad:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 45%,rgba(179,179,179,.07));
+ --rim:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 0 4px rgba(255,255,255,.12),inset 0 0 14px rgba(255,255,255,.06);
+ --lg-drop:0 12px 30px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
  --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.5),inset -1px -1px 0 -.5px rgba(255,255,255,.16),inset 0 0 0 .5px rgba(255,255,255,.06);
  --amb:radial-gradient(90% 55% at 100% 0%,rgba(229,9,20,.16),transparent 60%),radial-gradient(80% 50% at 0% 100%,rgba(110,60,200,.1),transparent 60%);
  color-scheme:dark;
@@ -53,7 +60,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .ic{display:block;flex:none}
 
 /* ===== 霧面深色面板（Netflix 風格：平面、低彩度，只用紅色當重點）===== */
-.glass,.lg{position:relative;background:var(--gl);border:0;box-shadow:var(--spec),var(--lg-sh2)}
+.glass,.lg{position:relative;background:var(--lg-grad),var(--gl);border:0;box-shadow:var(--spec),var(--rim),var(--lg-sh2)}
 
 /* 頁面上下直接鋪滿，不做模糊或淡化；只有主畫面模式可視高度不足時（.short），底部補一條實色 */
 .edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
@@ -69,7 +76,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
  --plo:calc(4px - var(--g)*9px);
  --pl:clamp(var(--plo),calc(var(--plo) + var(--x,0px) + (var(--pw0) - var(--pw))/2),calc(var(--dw,0px) - var(--plo) - var(--pw)));--pt:calc(31px - var(--ph)/2)}
 @property --g{syntax:"<number>";inherits:true;initial-value:0}
-.dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--lg-sh2)}
+.dock.glass,.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-grad),var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--rim),var(--lg-drop)}
 /* 導航欄與操作列：中灰玻璃（上緣略亮），在純黑背景上也看得出形狀；選中膠囊比底色深 */
 .dock.glass,.pacts{background:var(--bar-bg);backdrop-filter:blur(2px) saturate(1.5);-webkit-backdrop-filter:blur(2px) saturate(1.5)}
 .dock::before,.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
@@ -210,8 +217,8 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .hero.sh{padding-bottom:10px}
 
 .tools{display:flex;gap:10px;margin-bottom:6px;align-items:center}
-.search{flex:1;display:flex;align-items:center;gap:8px;border-radius:22px;padding:0 16px;height:44px;color:var(--sub);background:var(--gl);
- box-shadow:var(--spec)}
+.search{flex:1;display:flex;align-items:center;gap:8px;border-radius:22px;padding:0 16px;height:44px;color:var(--sub);background:var(--lg-grad),var(--gl);
+ box-shadow:var(--spec),var(--rim)}
 .search input{border:0;background:transparent;padding:0;height:100%;box-shadow:none!important;border-radius:0}
 .search .ib.pri{width:36px;height:36px;margin-right:-10px;border-radius:50%}
 
