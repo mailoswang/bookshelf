@@ -310,6 +310,20 @@ main.still>*{animation:none}
 .qt{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qs{font-size:.78rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qs.bad{color:var(--danger)}
 .qd{display:grid;place-items:center;color:#46d369;width:24px}
+/* 藏書清單（我的書櫃頁） */
+.mlist .search{margin:0}
+.mlist .chips{margin:12px 0 14px}
+.qs .miss{opacity:.5}
+.mlch{flex:none;display:grid;place-items:center;color:var(--sub);rotate:-90deg;transition:rotate .2s}
+.mli.on{margin-bottom:0;border-radius:12px 12px 0 0}
+.mli.on .mlch{rotate:0deg}
+.mled{background:var(--gl);box-shadow:var(--spec);border-radius:0 0 12px 12px;padding:0 12px 12px;margin-bottom:8px;scroll-margin-bottom:150px}
+.mled label{margin-top:8px}
+.mled input{padding:10px 12px}
+.mled .acts{margin-top:14px;gap:8px}
+.mled .btn{min-height:38px;padding:0 14px;font-size:.92rem}
+.mled .sp{flex:1}
+.mlnone{text-align:center;color:var(--sub);font-size:.88rem;padding:20px 0}
 .spin{display:block;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--acc) 25%,transparent);border-top-color:var(--acc);animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 
@@ -1009,25 +1023,90 @@ function applyTheme(){
 function setTheme(m){try{localStorage.setItem("bookshelf.theme",m)}catch(e){}applyTheme()}
 
 // ===== 我的書櫃：收藏統計 + App 介紹 =====
-function me(){
- setTitle("關於我的書櫃");
+// 藏書統計（清單裡改了定價會即時更新）
+function meStats(){
  const gs=groups(),multi=gs.filter(x=>x.l.length>1).length;
  const {total,priced}=sumPrice(books);
+ return`<div class="mstat"><div class="l">藏書量</div><div class="n">${books.length.toLocaleString()}<small>本</small></div></div>
+  <div class="mstat"><div class="l">系列數量</div><div class="n">${gs.length.toLocaleString()}<small>個</small></div><div class="d">多集系列 ${multi}・單本 ${gs.length-multi}</div></div>
+  <div class="mstat wide"><div class="l">總定價</div><div class="n">NT$ ${money(Math.round(total))}</div>
+   <div class="d">${priced?"平均每本 NT$ "+money(Math.round(total/priced)):"還沒有書標上定價"}${books.length>priced&&priced?"・另有 "+(books.length-priced)+" 本沒有定價，未計入":""}</div></div>`;
+}
+function me(){
+ setTitle("關於我的書櫃");
+ mlOpen=null;
  const feats=[["scan","掃描入庫","對準書背的 ISBN 條碼，書名、作者、定價與封面自動帶入；開啟快速入庫，可以一本接一本連續掃。"],
   ["book","自動歸類","從書名判斷系列、集數與分類，同一套書自動排在一起；首刷限定版、特裝版也會標成版本。"],
   ["refresh","跨裝置同步","iPhone、iPad、電腦填同一組同步密碼，書架會自動合併成同一份。"],
   ["search","隨手查找","用書名、作者或 ISBN 搜尋，逛書店時先確認這本有沒有買過。"]];
  app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1></section>
- <div class="mstats">
-  <div class="mstat"><div class="l">藏書量</div><div class="n">${books.length.toLocaleString()}<small>本</small></div></div>
-  <div class="mstat"><div class="l">系列數量</div><div class="n">${gs.length.toLocaleString()}<small>個</small></div><div class="d">多集系列 ${multi}・單本 ${gs.length-multi}</div></div>
-  <div class="mstat wide"><div class="l">總定價</div><div class="n">NT$ ${money(Math.round(total))}</div>
-   <div class="d">${priced?"平均每本 NT$ "+money(Math.round(total/priced)):"還沒有書標上定價"}${books.length>priced&&priced?"・另有 "+(books.length-priced)+" 本沒有定價，未計入":""}</div></div>
- </div>
+ <div class="mstats" id="mst">${meStats()}</div>
+ ${books.length?`<section class="sec mlist"><div class="sech"><h2>藏書清單</h2><span class="cnt" id="ml_n"></span></div>
+  <label class="search glass">${ic("search",18)}<input id="ml_q" type="search" placeholder="搜尋書名、作者、出版社、ISBN" value="${esc(mlQ)}" enterkeyhint="search"></label>
+  <div class="chips" id="ml_f">${Object.entries(ML_F).map(([k,l])=>`<button class="chip${mlF===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div>
+  <div id="ml"></div></section>`:""}
  <section class="about"><div class="abhead"><img class="abicon" src="icon-192.png" alt=""><div><div class="abk">ABOUT</div><h2>把書架裝進口袋</h2></div></div>
   <p class="abtxt">「我的書櫃」是為漫畫與小說收藏者做的個人藏書紀錄。掃一下書背就能入庫，資料和封面自動補齊，每一套書、每一集都整整齊齊排在架上；想知道收了多少、花了多少，打開這一頁就有答案。</p>
   <div class="feats">${feats.map(([i,t,d])=>`<div class="feat"><span class="fi">${ic(i,20)}</span><div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>
   <p class="abfoot">藏書資料存在這台裝置；開啟同步後，另存一份在你自己的 Cloudflare Worker。<br>從 Safari「加入主畫面」，就能像 App 一樣全螢幕使用。</p></section>`;
+ if(books.length)bindList();
+}
+
+// ===== 藏書清單：快速瀏覽全部藏書，點一本展開，直接改作者、出版社、定價、出版日期 =====
+let mlQ="",mlF="all",mlOpen=null;
+const ML_F={all:"全部",author:"缺作者",publisher:"缺出版社",price:"缺定價"};
+const ML_K=[["author","作者",""],["publisher","出版社",""],["price","定價","例：140"],["pubDate","出版日期","例：2024/05/01"]];
+const mlMiss=(b,k)=>k==="price"?priceOf(b)==null:!String(b[k]||"").trim();
+const zh=(a,b)=>a.localeCompare(b,"zh-Hant");
+// 依系列、集數、書名排序，同一套書排在一起
+const mlList=()=>{const q=norm(mlQ);
+ return books.filter(b=>(mlF==="all"||mlMiss(b,mlF))&&(!q||norm([b.title,b.series,b.author,b.publisher,b.isbn].join(" ")).includes(q)))
+  .sort((a,b)=>zh(a.series||a.title||"",b.series||b.title||"")||(a.vol??1e9)-(b.vol??1e9)||zh(a.title||"",b.title||""))};
+const mlSub=b=>{const p=priceOf(b),miss=t=>`<span class="miss">${t}</span>`;
+ return[b.author?esc(b.author):miss("未填作者"),b.publisher?esc(b.publisher):miss("未填出版社"),
+  p!=null?"NT$ "+money(p):b.price?esc(b.price):miss("未填定價")].join(" · ")};
+const mlRow=b=>{const open=mlOpen===b.id;
+ return`<div class="qi mli${open?" on":""}" data-ml="${esc(b.id)}" role="button" aria-expanded="${open}"><div class="qc">${cover(b)}</div><div class="qm"><div class="qt">${esc(b.pending?"ISBN "+b.isbn:b.title)}</div><div class="qs">${mlSub(b)}</div></div><span class="mlch">${ic("chev",16)}</span></div>`+
+  (open?`<div class="mled" data-ed="${esc(b.id)}">
+   <div class="two">${ML_K.map(([k,l,ph])=>`<div><label>${l}</label><input data-k="${k}" value="${esc(b[k]||"")}"${ph?` placeholder="${ph}"`:""}${k==="price"?' inputmode="decimal"':""} enterkeyhint="done"></div>`).join("")}</div>
+   <div class="acts"><button class="btn" data-mla="full">${ic("pencil",16)}完整編輯</button><span class="sp"></span><button class="btn" data-mla="cancel">取消</button><button class="btn pri" data-mla="save">${ic("check",16)}儲存</button></div></div>`:"")};
+function renderList(){
+ const el=$("#ml");if(!el)return;
+ const l=mlList();
+ $("#ml_n").textContent=l.length===books.length?"共 "+books.length+" 本":"符合 "+l.length+" / "+books.length+" 本";
+ el.innerHTML=l.length?l.map(mlRow).join(""):`<p class="mlnone">${mlF==="all"?"沒有符合的書":"沒有"+ML_F[mlF]+"的書"}</p>`;
+}
+// 編輯中的欄位跟原本不同就算有修改
+const mlVals=ed=>Object.fromEntries(ML_K.map(([k])=>[k,ed.querySelector(`[data-k="${k}"]`).value.trim()]));
+const mlDirty=()=>{const ed=$("#ml .mled");if(!ed)return false;const b=books.find(x=>x.id===ed.dataset.ed);if(!b)return false;
+ const v=mlVals(ed);return ML_K.some(([k])=>v[k]!==String(b[k]||"").trim())};
+async function mlToggle(id){
+ if(mlOpen&&mlOpen!==id&&mlDirty()&&!await dlg({title:"放棄修改？",msg:"剛才編輯的內容還沒儲存。",ok:"放棄",danger:true}))return;
+ mlOpen=mlOpen===id?null:id;renderList();
+ const ed=$("#ml .mled");if(ed)ed.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function mlSave(){
+ const ed=$("#ml .mled");if(!ed)return;const b=books.find(x=>x.id===ed.dataset.ed);if(!b)return;
+ const v=mlVals(ed);v.pubDate=normDate(v.pubDate)||v.pubDate;
+ if(ML_K.some(([k])=>v[k]!==String(b[k]||"").trim())){Object.assign(b,v);b.updatedAt=Date.now();save();toast("已儲存")}
+ mlOpen=null;renderList();$("#mst").innerHTML=meStats();
+}
+function bindList(){
+ const el=$("#ml");
+ $("#ml_q").oninput=e=>{mlQ=e.target.value;renderList()};
+ $("#ml_q").onkeydown=e=>{if(e.key==="Enter")e.target.blur()};
+ $("#ml_f").onclick=e=>{const c=e.target.closest("[data-f]");if(!c)return;mlF=c.dataset.f;
+  $("#ml_f").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));renderList()};
+ el.onclick=e=>{
+  const a=e.target.closest("[data-mla]");
+  if(a){const id=a.closest(".mled").dataset.ed;
+   if(a.dataset.mla==="save")return mlSave();
+   if(a.dataset.mla==="cancel"){mlOpen=null;return renderList()}
+   if(a.dataset.mla==="full"){mlOpen=null;return go("#/book/"+id+"/edit")}}
+  const r=e.target.closest("[data-ml]");if(r)mlToggle(r.dataset.ml)};
+ el.onkeydown=e=>{if(!e.target.closest(".mled"))return;
+  if(e.key==="Enter"){e.preventDefault();mlSave()}else if(e.key==="Escape"){mlOpen=null;renderList()}};
+ renderList();
 }
 
 // ===== 設定 =====
