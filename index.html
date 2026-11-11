@@ -143,23 +143,21 @@ input::placeholder{color:var(--sub);opacity:.8}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .acts{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-/* 設定頁的開關與分段控件：liquidglass.dev 的 <lg-switch>、<lg-segmented>（按住時變成會折射的玻璃）
-   --lg-surface 要跟後面的面板同色：按住時玻璃會蓋到開關軌道外面，看到的就是這個顏色 */
-:root{--lg-on:#34c759;--lg-accent:var(--ink);--lg-text:var(--ink);--lg-text-muted:var(--sub);--lg-focus:var(--acc);
- --lg-track:#e3e3e6;--lg-track-off:#d1d1d6;--lg-surface:#ffffff;--sw-surface:#f9f9f9}
-:root[data-theme="dark"]{--lg-on:#30d158;--lg-track:#2c2c2e;--lg-track-off:#3a3a3c;--lg-surface:#5b5b5f;--sw-surface:#272727;
- --lg-shadow-1:0 1px 3px rgba(0,0,0,.4);--lg-shadow-2:0 4px 12px rgba(0,0,0,.45)}
-lg-segmented.thseg{display:flex;width:100%;margin-top:14px}
-lg-segmented.thseg .lg-seg__option{flex:1;min-width:0}
-lg-switch.navsw{display:flex;width:100%;margin-top:18px;--lg-surface:var(--sw-surface)}
-lg-switch.navsw .lg-switch__label{margin:0;font-size:1rem;font-weight:500;color:var(--ink)}
-/* 元件還沒載入（或載入失敗）時的備用樣子 */
-lg-segmented.thseg:not(:defined){padding:4px;gap:4px;border-radius:12px;background:var(--lg-track)}
-lg-segmented.thseg:not(:defined) button{flex:1;font:inherit;font-size:14px;line-height:32px;border:0;border-radius:8px;background:transparent;color:var(--sub)}
-lg-segmented.thseg:not(:defined) button[aria-checked="true"]{background:var(--lg-surface);color:var(--ink)}
-lg-switch.navsw:not(:defined){visibility:hidden}
-.navsw-fb{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:1rem;color:var(--ink)}
-.navsw-fb input{width:auto}
+/* 設定頁的開關與分段控件：動畫照 liquidglass.dev（按下變大、滑動時依速度拉長、彈簧回彈），
+   但不用玻璃折射：折射每一格都要重算貼圖、重編 PNG，手機上會卡 */
+:root{--ctl-on:#34c759;--ctl-off:#d1d1d6;--ctl-track:#e3e3e6;--ctl-ind:#fff;--ctl-sh:0 1px 3px rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.08)}
+:root[data-theme="dark"]{--ctl-on:#30d158;--ctl-off:#3a3a3c;--ctl-track:#2c2c2e;--ctl-ind:#5b5b5f;--ctl-sh:0 1px 3px rgba(0,0,0,.4),0 3px 8px rgba(0,0,0,.3)}
+.seg2{position:relative;display:flex;padding:4px;gap:4px;margin-top:14px;border-radius:12px;background:var(--ctl-track)}
+.seg2 button{position:relative;z-index:1;flex:1;min-width:0;height:32px;font:inherit;font-size:14px;font-weight:500;border:0;border-radius:8px;background:transparent;color:var(--sub);cursor:pointer;transition:color .2s}
+.seg2 button[aria-checked="true"]{color:var(--ink)}
+.seg2 button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.seg2 .segk{position:absolute;left:0;top:0;border-radius:8px;background:var(--ctl-ind);box-shadow:var(--ctl-sh);pointer-events:none;will-change:transform}
+.sw2{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;font-size:1rem;font-weight:500;color:var(--ink);cursor:pointer}
+.swc{position:relative;flex:none;width:64px;height:28px;--p:0}
+.swc input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;z-index:2}
+.swt{position:absolute;inset:0;border-radius:14px;background:color-mix(in srgb,var(--ctl-off),var(--ctl-on) calc(var(--p)*100%))}
+.swk{position:absolute;left:0;top:0;background:#fff;box-shadow:var(--ctl-sh);pointer-events:none;will-change:transform}
+.swc input:focus-visible~.swk{outline:2px solid var(--acc);outline-offset:2px}
 /* 導航欄不顯示文字 */
 #dock.nolabel .ltb-item span,#dock.nolabel .ltb-copy i{display:none}
 
@@ -1038,8 +1036,43 @@ function statusText(){
 }
 
 // ===== 外觀 =====
-const LG_URL="https://liquidglass.dev/lib/components.js";
-let lgP=null;const lgLoad=()=>lgP||(lgP=import(LG_URL).then(()=>true,()=>false));
+// 彈簧（照實際經過的時間、每步 1/120 秒積分；開「減少動態效果」時直接到位）
+function spring(v0,onUpdate,k,c){let v=v0,vel=0,t=v0,raf=0,last=0;
+ const step=now=>{let r=Math.min(.1,(now-last)/1000||1/60);last=now;
+  while(r>1e-6){const dt=Math.min(1/120,r);vel+=(-k*(v-t)-c*vel)*dt;v+=vel*dt;r-=dt}
+  if(Math.abs(vel)<.01&&Math.abs(v-t)<.01){v=t;vel=0;raf=0;onUpdate(v,0);return}
+  onUpdate(v,vel);raf=requestAnimationFrame(step)};
+ return{set(n,o={}){t=n;if(o.immediate||matchMedia("(prefers-reduced-motion: reduce)").matches){cancelAnimationFrame(raf);raf=0;v=n;vel=0;onUpdate(v,0);return}
+  if(!raf){last=performance.now();raf=requestAnimationFrame(step)}}}}
+// 開關：按下時圓鈕從 36×24 變大成 54×36，切換時滑過去並依速度拉長
+function initSwitch(wrap,onChange){
+ const c=wrap.querySelector(".swc"),inp=c.querySelector("input"),k=c.querySelector(".swk");let x=inp.checked?1:0,v=0,p=0;
+ const render=()=>{const st=Math.min(10,Math.abs(v)*1.6),w=36+18*p+st,h=24+12*p-st*.2;
+  c.style.setProperty("--p",x.toFixed(3));
+  k.style.width=w+"px";k.style.height=h+"px";k.style.borderRadius=h/2+"px";
+  k.style.transform=`translate(${(20+24*x-w/2).toFixed(2)}px,${(14-h/2).toFixed(2)}px)`};
+ const xs=spring(x,(val,vel)=>{x=val;v=vel;render()},420,30),ps=spring(0,val=>{p=val;render()},600,36);
+ inp.addEventListener("pointerdown",()=>ps.set(1));
+ ["pointerup","pointercancel","pointerleave"].forEach(t=>inp.addEventListener(t,()=>ps.set(0)));
+ inp.addEventListener("change",()=>{xs.set(inp.checked?1:0);onChange(inp.checked)});
+ render();
+}
+// 分段控件：選中指示器以彈簧滑到選項上，滑動時依速度拉長；方向鍵也能切換
+function initSeg(el,onChange){
+ const bs=[...el.querySelectorAll("button")],k=el.querySelector(".segk");let idx=Math.max(0,bs.findIndex(b=>b.getAttribute("aria-checked")==="true")),x=0,v=0,geo=null;
+ const measure=()=>{geo=bs.map(b=>({l:b.offsetLeft,w:b.offsetWidth,t:b.offsetTop,h:b.offsetHeight}))};
+ const widthAt=pos=>{let i=0;while(i<geo.length-2&&pos>geo[i+1].l)i++;const a=geo[i],b=geo[i+1]||a,f=Math.min(1,Math.max(0,(pos-a.l)/((b.l-a.l)||1)));return a.w+(b.w-a.w)*f};
+ const render=()=>{if(!geo)measure();const st=Math.min(12,Math.abs(v)*.02),w=widthAt(x)+st,h=geo[0].h-st*.25;
+  k.style.width=w+"px";k.style.height=h+"px";k.style.transform=`translate(${(x-st/2).toFixed(2)}px,${(geo[0].t+(geo[0].h-h)/2).toFixed(2)}px)`};
+ const xs=spring(0,(val,vel)=>{x=val;v=vel;render()},380,28);
+ const select=(i,o={})=>{i=(i+bs.length)%bs.length;const changed=i!==idx;idx=i;
+  bs.forEach((b,j)=>{b.setAttribute("aria-checked",String(j===i));b.tabIndex=j===i?0:-1});
+  if(o.focus)bs[i].focus();if(!geo)measure();xs.set(geo[i].l,{immediate:o.immediate});if(o.emit&&changed)onChange(bs[i].value)};
+ bs.forEach((b,i)=>b.addEventListener("click",()=>select(i,{emit:true})));
+ el.addEventListener("keydown",e=>{const d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;e.preventDefault();select(idx+d,{emit:true,focus:true})});
+ new ResizeObserver(()=>{measure();select(idx,{immediate:true})}).observe(el);
+ select(idx,{immediate:true});
+}
 const themeMode=()=>{try{const t=localStorage.getItem("bookshelf.theme");return t==="light"||t==="auto"?t:"dark"}catch(e){return"dark"}};
 function applyTheme(){
  const m=themeMode(),t=m==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;
@@ -1120,8 +1153,8 @@ function settings(){
  setTitle("設定");
  const base=cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):""),mode=themeMode();
  app.innerHTML=`<div class="pane glass"><h2>外觀</h2><p class="sub">自動會跟隨手機的深色模式設定。</p>
- <lg-segmented class="thseg" id="seg" value="${mode}" label="外觀">${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button value="${v}" aria-checked="${mode===v}">${l}</button>`).join("")}</lg-segmented>
- <lg-switch class="navsw" id="s_lab"${navLabels?" checked":""}>顯示導航欄文字</lg-switch></div>
+ <div class="seg2" id="seg" role="radiogroup" aria-label="外觀"><span class="segk" aria-hidden="true"></span>${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button type="button" role="radio" value="${v}" aria-checked="${mode===v}">${l}</button>`).join("")}</div>
+ <label class="sw2"><span>顯示導航欄文字</span><span class="swc"><input type="checkbox" role="switch" id="s_lab"${navLabels?" checked":""}><span class="swt" aria-hidden="true"></span><span class="swk" aria-hidden="true"></span></span></label></div>
  <div class="pane glass"><h2>跨裝置同步</h2><p class="sub">每台裝置填入相同的 Worker 網址與同步密碼，書架會自動合併；填好後也會用同一個 Worker 查詢 ISBN。</p>
  <label>Worker 網址</label><input id="s_url" value="${esc(base)}" placeholder="https://isbn-lookup.你的帳號.workers.dev" autocapitalize="off" autocorrect="off" inputmode="url">
  <label>同步密碼（SYNC_TOKEN）</label><input id="s_tok" type="password" value="${esc(cfg.token||"")}" autocomplete="off">
@@ -1132,15 +1165,9 @@ function settings(){
  <div class="pane glass"><h2>重新整理</h2><p class="sub">重新載入整個 App，抓取網站最新版本。從主畫面開啟時沒有瀏覽器的重新整理鍵，可以用這裡。</p>
  <div class="acts"><button class="btn" id="x_reload">${ic("refresh",18)}重新整理</button></div></div>
 `;
- $("#seg").addEventListener("change",e=>{if(e.detail&&e.detail.value)setTheme(e.detail.value)});
- $("#seg").addEventListener("click",e=>{const b=e.target.closest("button[value]");if(!b||customElements.get("lg-segmented"))return;
-  setTheme(b.value);$("#seg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-checked",x===b))});
- $("#s_lab").addEventListener("change",e=>{navLabels=!!e.target.checked;try{localStorage.setItem("bookshelf.navlabels",navLabels?"1":"0")}catch(_){}
-  $("#dock").classList.toggle("nolabel",!navLabels);nav&&nav.layout()});
- // 元件載不到（離線）時，開關換成一般的勾選框
- lgLoad().then(ok=>{const sw=$("#s_lab");if(ok||!sw||customElements.get("lg-switch"))return;
-  sw.outerHTML=`<label class="navsw-fb"><span>顯示導航欄文字</span><input type="checkbox" id="s_lab_fb"${navLabels?" checked":""}></label>`;
-  $("#s_lab_fb").onchange=e=>{navLabels=e.target.checked;try{localStorage.setItem("bookshelf.navlabels",navLabels?"1":"0")}catch(_){}$("#dock").classList.toggle("nolabel",!navLabels)}});
+ initSeg($("#seg"),setTheme);
+ initSwitch($(".sw2"),on=>{navLabels=on;try{localStorage.setItem("bookshelf.navlabels",on?"1":"0")}catch(_){}
+  $("#dock").classList.toggle("nolabel",!on);nav&&nav.layout()});
  $("#s_go").onclick=async()=>{
   const url=$("#s_url").value.trim().replace(/\?.*$/,"").replace(/\/+$/,""),tok=$("#s_tok").value.trim();
   if(!/^https:\/\//.test(url)||!tok){$("#s_msg").textContent="請填入 https 開頭的 Worker 網址與同步密碼";return}
@@ -1227,7 +1254,7 @@ addEventListener("hashchange",route);
 // 清除先前版本留下的離線快取與 Service Worker
 if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>{rs.forEach(r=>r.unregister());if(rs.length&&window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))}).catch(()=>{})}
 const hideSplash=()=>{const sp=$("#splash");if(!sp)return;setTimeout(()=>{sp.classList.add("out");setTimeout(()=>sp.remove(),500)},Math.max(0,1050-performance.now()))};
-applyTheme();ensureK().finally(()=>{route();hideSplash();sync();setTimeout(fillPending,1500);setTimeout(lgLoad,2500)});
+applyTheme();ensureK().finally(()=>{route();hideSplash();sync();setTimeout(fillPending,1500)});
 </script>
 </body>
 </html>
