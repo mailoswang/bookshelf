@@ -24,16 +24,18 @@
  --ink:#141414;--sub:#6d6d6d;--bg1:#f3f3f3;
  --solid:rgba(0,0,0,.05);--line:rgba(0,0,0,.12);
  --acc:#e50914;--accink:#fff;--danger:#c11119;--stk:#cfcfcf;
- --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--bar-bg:var(--lg-grad),rgba(255,255,255,.42);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
+ --ph1:#5a5a5a;--ph2:#2b2b2b;--nav-ind:rgba(0,0,0,.07);--nav-on:#e50914;--lift-bg:rgba(255,255,255,.55);--bar-bg:rgba(250,250,250,.86);--nav-bg:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.1) 45%,rgba(179,179,179,.16)),rgba(255,255,255,.42);--lift-ring:rgba(255,255,255,.7);--lift-edge:rgba(0,0,0,.14);--lift-sh:rgba(0,0,0,.18);
  --shadow:0 10px 28px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
  /* 液態玻璃（數值取自 liquidglass.dev 預設）：色調、兩級陰影、左上受光的邊緣高光、彈簧；霧化一律 blur(16px) saturate(1.6) */
  --gl:rgba(255,255,255,.5);--gl2:rgba(255,255,255,.5);--lg-tint:rgba(255,255,255,.5);--lg-ind:rgba(255,255,255,.6);
  --lg-sh1:0 1px 3px rgba(0,0,0,.08);--lg-sh2:0 4px 12px rgba(0,0,0,.1);
  /* 外觀參考 liquid-glass-js：由上往下白→灰的染色、越靠邊越亮的一圈邊緣光（模擬邊緣折射）、柔和的大投影 */
- --lg-grad:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.1) 45%,rgba(179,179,179,.16));
- --rim:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 0 4px rgba(255,255,255,.45),inset 0 0 14px rgba(255,255,255,.2);
- --lg-drop:0 10px 28px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);
- --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.95),inset -1px -1px 0 -.5px rgba(255,255,255,.6),inset 0 0 0 .5px rgba(0,0,0,.06);
+ /* 導航欄保留液態玻璃（--nav-*）；其他元件改成平面：沒有高光、邊緣光與染色，只留細框與淡陰影 */
+ --nav-rim:inset 0 0 0 1px rgba(255,255,255,.55),inset 0 0 4px rgba(255,255,255,.45),inset 0 0 14px rgba(255,255,255,.2);
+ --nav-drop:0 10px 28px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.06);
+ --lg-grad:linear-gradient(transparent,transparent);--rim:0 0 transparent;
+ --lg-drop:0 6px 18px rgba(0,0,0,.08);
+ --spec:inset 0 0 0 .5px rgba(0,0,0,.08);
  --spring:linear(0, 0.044 4%, 0.150 8%, 0.285 12%, 0.428 17%, 0.563 21%, 0.684 25%, 0.784 29%, 0.865 33%, 0.926 38%, 0.970 42%, 1.000 46%, 1.019 50%, 1.029 54%, 1.033 58%, 1.033 62%, 1.030 67%, 1.026 71%, 1.021 75%, 1.016 79%, 1.012 83%, 1.008 88%, 1.006 92%, 1.003 96%, 1);
  --spring-nav:linear(0, 0.046 4%, 0.153 8%, 0.290 12%, 0.432 17%, 0.565 21%, 0.682 25%, 0.779 29%, 0.856 33%, 0.915 38%, 0.958 42%, 0.987 46%, 1.005 50%, 1.016 54%, 1.021 58%, 1.023 62%, 1.022 67%, 1.019 71%, 1.016 75%, 1.013 79%, 1.010 83%, 1.007 88%, 1.005 92%, 1.003 96%, 1);
  --amb:radial-gradient(90% 55% at 100% 0%,rgba(229,9,20,.08),transparent 60%),radial-gradient(80% 50% at 0% 100%,rgba(90,110,255,.06),transparent 60%);
@@ -43,13 +45,14 @@
  --ink:#fff;--sub:#a3a3a3;--bg1:#141414;
  --solid:rgba(255,255,255,.08);--line:rgba(255,255,255,.14);
  --acc:#e50914;--accink:#fff;--danger:#ff5f57;--stk:#333;
- --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--bar-bg:var(--lg-grad),rgba(86,86,90,.55);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
+ --ph1:#3a3a3a;--ph2:#1b1b1b;--nav-ind:rgba(0,0,0,.55);--nav-on:#ff3d47;--lift-bg:rgba(255,255,255,.12);--bar-bg:rgba(48,48,52,.9);--nav-bg:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 45%,rgba(179,179,179,.07)),rgba(86,86,90,.55);--lift-ring:rgba(255,255,255,.32);--lift-edge:rgba(0,0,0,.45);--lift-sh:rgba(0,0,0,.4);
  --shadow:0 12px 34px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4);
  --gl:rgba(255,255,255,.08);--gl2:rgba(255,255,255,.14);--lg-tint:rgba(17,24,39,.32);--lg-ind:rgba(255,255,255,.14);
- --lg-grad:linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 45%,rgba(179,179,179,.07));
- --rim:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 0 4px rgba(255,255,255,.12),inset 0 0 14px rgba(255,255,255,.06);
- --lg-drop:0 12px 30px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
- --spec:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.5),inset -1px -1px 0 -.5px rgba(255,255,255,.16),inset 0 0 0 .5px rgba(255,255,255,.06);
+ --nav-rim:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 0 4px rgba(255,255,255,.12),inset 0 0 14px rgba(255,255,255,.06);
+ --nav-drop:0 12px 30px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.3);
+ --lg-grad:linear-gradient(transparent,transparent);--rim:0 0 transparent;
+ --lg-drop:0 8px 24px rgba(0,0,0,.4);
+ --spec:inset 0 0 0 .5px rgba(255,255,255,.08);
  --amb:radial-gradient(90% 55% at 100% 0%,rgba(229,9,20,.16),transparent 60%),radial-gradient(80% 50% at 0% 100%,rgba(110,60,200,.1),transparent 60%);
  color-scheme:dark;
 }
@@ -70,15 +73,15 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：liquid-tabbar（https://github.com/mailoswang/liquid-tabbar），這裡只把書櫃的主題色接過去 ===== */
 .ltb{--ltb-bottom:calc(var(--navb) + var(--kb,0px));--ltb-ink:var(--ink);--ltb-accent:var(--nav-on);--ltb-focus:var(--acc);
  --ltb-ind:var(--nav-ind);--ltb-lift-bg:var(--lift-bg);--ltb-lift-ring:var(--lift-ring);--ltb-lift-edge:var(--lift-edge);--ltb-lift-shadow:var(--lift-sh);
- --ltb-bg:var(--bar-bg);--ltb-rim:var(--rim);--ltb-shadow:var(--lg-drop)}
+ --ltb-bg:var(--nav-bg);--ltb-rim:var(--nav-rim);--ltb-shadow:var(--nav-drop)}
 /* 同步中／同步失敗：設定圖示右上角的小圓點 */
 .ltb.syncing [data-id="cfg"]::after,.ltb.err [data-id="cfg"]::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:var(--sub)}
 .ltb.syncing [data-id="cfg"]::after{animation:pulse 1s ease-in-out infinite}
 .ltb.err [data-id="cfg"]::after{background:var(--acc)}
-.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-grad),var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--rim),var(--lg-drop)}
+.pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--spec),var(--lg-drop)}
 /* 操作列：跟導航欄同樣的中灰玻璃（上緣略亮），在純黑背景上也看得出形狀 */
 .pacts{background:var(--bar-bg);backdrop-filter:blur(2px) saturate(1.5);-webkit-backdrop-filter:blur(2px) saturate(1.5)}
-.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+.pacts::before,.dlg-p::before{content:none;position:absolute;inset:0;border-radius:inherit;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 /* 操作列：一整圈亮邊（上緣最亮、下緣次之），黑底上輪廓清楚 */
@@ -123,8 +126,8 @@ main>*:nth-child(2){animation-delay:.04s}main>*:nth-child(3){animation-delay:.08
 .btn.dng{color:var(--danger)}
 .btn.pri.dng{background:var(--danger);color:#fff}
 .btn.play{background:#fff;color:#141414;box-shadow:var(--lg-sh2)}
-.btn.dim{background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
- box-shadow:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.55),inset -1px -1px 0 -.5px rgba(255,255,255,.18),var(--lg-sh2)}
+.btn.dim{background:rgba(255,255,255,.16);color:#fff;backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);
+ box-shadow:var(--lg-sh2)}
 :root:not([data-theme="dark"]) .btn.dim,:root:not([data-theme="dark"]) .pill{background:rgba(255,255,255,.5);color:var(--ink);box-shadow:var(--spec),var(--lg-sh2)}
 .chip{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.88rem;font-weight:500;color:var(--ink);cursor:pointer;min-height:32px;padding:0 14px;border-radius:16px;border:0;background:var(--gl);
  box-shadow:var(--spec);transition:transform .32s var(--spring),background .2s}
@@ -211,7 +214,7 @@ h3{margin:0;font-size:1.08rem;font-weight:800}
 .cv{position:relative;isolation:isolate}
 .cover{position:relative;width:100%;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:linear-gradient(160deg,var(--ph1),var(--ph2));box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:flex-end}
 .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.cover::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 1px 0 rgba(255,255,255,.22)}
+.cover::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .cover .ph{position:relative;z-index:1;padding:10px;color:#fff;font-weight:800;font-size:.88rem;line-height:1.3;border-left:3px solid var(--acc)}
 .cv.stack::before,.cv.stack::after{content:"";position:absolute;inset:0;border-radius:8px;background:var(--stk);z-index:-1}
 .cv.stack::before{transform:translate(5px,-5px);opacity:.75}
@@ -259,7 +262,7 @@ main.still>*{animation:none}
 /* series */
 .pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
 .pill{font-size:.78rem;font-weight:500;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;
- backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.55),inset -1px -1px 0 -.5px rgba(255,255,255,.18)}
+ backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6)}
 .sec{margin-top:26px}
 .sech{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sech .cnt{flex:1;font-size:.8rem;color:var(--sub)}
@@ -310,19 +313,21 @@ main.still>*{animation:none}
 .qt{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qs{font-size:.78rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.qs.bad{color:var(--danger)}
 .qd{display:grid;place-items:center;color:#46d369;width:24px}
-/* 藏書清單（我的書櫃頁） */
-.mlist .search{margin:0}
-.mlist .chips{margin:12px 0 14px}
-.qs .miss{opacity:.5}
-.mlch{flex:none;display:grid;place-items:center;color:var(--sub);rotate:-90deg;transition:rotate .2s}
-.mli.on{margin-bottom:0;border-radius:12px 12px 0 0}
-.mli.on .mlch{rotate:0deg}
-.mled{background:var(--gl);box-shadow:var(--spec);border-radius:0 0 12px 12px;padding:0 12px 12px;margin-bottom:8px;scroll-margin-bottom:150px}
-.mled label{margin-top:8px}
-.mled input{padding:10px 12px}
-.mled .acts{margin-top:14px;gap:8px}
-.mled .btn{min-height:38px;padding:0 14px;font-size:.92rem}
-.mled .sp{flex:1}
+/* 我的書櫃頁 → 藏書清單的入口 */
+.melink{margin-top:16px;padding:12px 14px}
+.melink .fi{width:36px;height:36px;border-radius:10px}
+.mlch{flex:none;display:grid;place-items:center;color:var(--sub);rotate:-90deg}
+/* 藏書清單：簡單的列表，每列一行書名＋三個輸入框 */
+.mlh{margin:4px 2px 12px}
+.mlfs{margin:12px 0 6px}
+.mf{display:grid;grid-template-columns:1.25fr 1.25fr .8fr;gap:6px}
+.mlcols{padding:8px 0 4px;font-size:.72rem;color:var(--sub);font-weight:600}
+.mlcols span{padding-left:10px}
+.mr{padding:10px 0;border-top:1px solid var(--line)}
+.mrh{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.mt{flex:1;min-width:0;font-weight:700;font-size:.9rem;color:var(--ink);text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms{flex:none;font-size:.72rem;color:#46d369}
+.mf input{padding:8px 10px;border-radius:8px;font-size:15px;background:var(--solid);box-shadow:none}
 .mlnone{text-align:center;color:var(--sub);font-size:.88rem;padding:20px 0}
 .spin{display:block;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--acc) 25%,transparent);border-top-color:var(--acc);animation:rot .8s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
@@ -497,17 +502,17 @@ const NI={
  cfg:'<path d="M3.5 6.5h2.2M12.3 6.5h8.2M3.5 12h7.7M17.8 12h2.7M3.5 17.5h4.2M14.3 17.5h6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="6.5" r="2.9"/><circle cx="14.5" cy="12" r="2.9"/><circle cx="11" cy="17.5" r="2.9"/>',
  me:'<rect x="3.2" y="6" width="5" height="13" rx="1.3"/><rect x="9.4" y="3" width="5.6" height="16" rx="1.3"/><rect x="16" y="6.6" width="4.6" height="12.4" rx="1.3" transform="rotate(12 20.6 19)"/><rect x="2.5" y="19.8" width="19" height="2" rx="1"/>'};
 function renderNav(){
- const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h);
+ const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
  const cur=h==="#/"||h==="#"||sub?0:h.startsWith("#/add")?1:h.startsWith("#/settings")?2:h.startsWith("#/me")?3:-1;
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
-  sub?{id:"back",label:"回上頁",icon:NI.back,fn:goBack}:{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}},
+  deep?{id:"back",label:"回上頁",icon:NI.back,fn:goBack}:{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}},
   {id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")},
   {id:"me",label:"我的書櫃",icon:NI.me,fn:()=>go("#/me")}];
  // 點導航欄（回上頁除外）直接切換、不播封面飛行動畫；按住目前那格的「首頁」＝回到頂端
  // 換頁會重畫整頁（首頁幾十張封面），等膠囊滑到位才換，動畫起步才不會卡住
  nav=nav||new LiquidTabbar("#dock",{waitForPill:true,
   onSelect:a=>{navTap=a.id!=="back";a.fn()},
-  onReselect:(a,i,{source})=>{if(source==="click"){navTap=a.id!=="back";a.fn()}else if(a.id==="home")a.fn()}});
+  onReselect:(a,i,{source})=>{if(source==="click"){navTap=a.id!=="back";a.fn()}else if(a.id==="home")a.fn();else if(a.id==="me"&&location.hash!=="#/me"){navTap=true;a.fn()}}});
  nav.set({items,active:cur});
 }
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
@@ -526,6 +531,7 @@ function go(h,rep){if(location.hash===h){route();return}if(rep){hist.pop();locat
 function parentOf(){const h=location.hash;
  if(h.startsWith("#/book/")){const q=h.slice(7).split("/");if(q[1]==="edit")return"#/book/"+q[0];const b=books.find(x=>x.id===q[0]);if(b&&books.filter(x=>skey(x)===skey(b)).length>1)return"#/series/"+encodeURIComponent(skey(b));return"#/"}
  if(h==="#/edit/new")return draft&&draft.isbn?"#/add":"#/";
+ if(h.startsWith("#/me/"))return"#/me";
  return"#/"}
 function goBack(){if(draft&&location.hash.startsWith("#/edit"))draft=null;if(hist.length>1)history.back();else go(parentOf())}
 function stopScan(){clearTimeout(timer);timer=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
@@ -579,7 +585,7 @@ function render(){
  if(p[1]==="edit")return draft?edit(draft,true):go("#/",true);
  if(p[1]==="add")return scan();
  if(p[1]==="settings")return settings();
- if(p[1]==="me")return me();
+ if(p[1]==="me")return p[2]==="list"?bookList():me();
  shelf();
 }
 
@@ -1034,78 +1040,58 @@ function meStats(){
 }
 function me(){
  setTitle("關於我的書櫃");
- mlOpen=null;
+ const lack=books.filter(b=>ML_K.some(([k])=>mlMiss(b,k))).length;
  const feats=[["scan","掃描入庫","對準書背的 ISBN 條碼，書名、作者、定價與封面自動帶入；開啟快速入庫，可以一本接一本連續掃。"],
   ["book","自動歸類","從書名判斷系列、集數與分類，同一套書自動排在一起；首刷限定版、特裝版也會標成版本。"],
   ["refresh","跨裝置同步","iPhone、iPad、電腦填同一組同步密碼，書架會自動合併成同一份。"],
   ["search","隨手查找","用書名、作者或 ISBN 搜尋，逛書店時先確認這本有沒有買過。"]];
  app.innerHTML=`<section class="mehead"><div class="meav">${AV.replace(/width="15" height="15"/,'width="46" height="46"')}</div><h1>我的書櫃</h1></section>
  <div class="mstats" id="mst">${meStats()}</div>
- ${books.length?`<section class="sec mlist"><div class="sech"><h2>藏書清單</h2><span class="cnt" id="ml_n"></span></div>
-  <label class="search glass">${ic("search",18)}<input id="ml_q" type="search" placeholder="搜尋書名、作者、出版社、ISBN" value="${esc(mlQ)}" enterkeyhint="search"></label>
-  <div class="chips" id="ml_f">${Object.entries(ML_F).map(([k,l])=>`<button class="chip${mlF===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div>
-  <div id="ml"></div></section>`:""}
+ ${books.length?`<div class="qi melink" data-go="#/me/list"><span class="fi">${ic("book",20)}</span><div class="qm"><div class="qt">藏書清單</div><div class="qs">共 ${books.length} 本${lack?"・"+lack+" 本缺資料":""}・快速瀏覽與修改作者、出版社、定價</div></div><span class="mlch">${ic("chev",16)}</span></div>`:""}
  <section class="about"><div class="abhead"><img class="abicon" src="icon-192.png" alt=""><div><div class="abk">ABOUT</div><h2>把書架裝進口袋</h2></div></div>
   <p class="abtxt">「我的書櫃」是為漫畫與小說收藏者做的個人藏書紀錄。掃一下書背就能入庫，資料和封面自動補齊，每一套書、每一集都整整齊齊排在架上；想知道收了多少、花了多少，打開這一頁就有答案。</p>
   <div class="feats">${feats.map(([i,t,d])=>`<div class="feat"><span class="fi">${ic(i,20)}</span><div><b>${t}</b><p>${d}</p></div></div>`).join("")}</div>
   <p class="abfoot">藏書資料存在這台裝置；開啟同步後，另存一份在你自己的 Cloudflare Worker。<br>從 Safari「加入主畫面」，就能像 App 一樣全螢幕使用。</p></section>`;
- if(books.length)bindList();
 }
 
-// ===== 藏書清單：快速瀏覽全部藏書，點一本展開，直接改作者、出版社、定價、出版日期 =====
-let mlQ="",mlF="all",mlOpen=null;
+// ===== 藏書清單（#/me/list）：每本書的作者、出版社、定價直接是輸入框，離開欄位就自動儲存 =====
+let mlQ="",mlF="all";
 const ML_F={all:"全部",author:"缺作者",publisher:"缺出版社",price:"缺定價"};
-const ML_K=[["author","作者",""],["publisher","出版社",""],["price","定價","例：140"],["pubDate","出版日期","例：2024/05/01"]];
+const ML_K=[["author","作者"],["publisher","出版社"],["price","定價"]];
 const mlMiss=(b,k)=>k==="price"?priceOf(b)==null:!String(b[k]||"").trim();
 const zh=(a,b)=>a.localeCompare(b,"zh-Hant");
 // 依系列、集數、書名排序，同一套書排在一起
 const mlList=()=>{const q=norm(mlQ);
  return books.filter(b=>(mlF==="all"||mlMiss(b,mlF))&&(!q||norm([b.title,b.series,b.author,b.publisher,b.isbn].join(" ")).includes(q)))
   .sort((a,b)=>zh(a.series||a.title||"",b.series||b.title||"")||(a.vol??1e9)-(b.vol??1e9)||zh(a.title||"",b.title||""))};
-const mlSub=b=>{const p=priceOf(b),miss=t=>`<span class="miss">${t}</span>`;
- return[b.author?esc(b.author):miss("未填作者"),b.publisher?esc(b.publisher):miss("未填出版社"),
-  p!=null?"NT$ "+money(p):b.price?esc(b.price):miss("未填定價")].join(" · ")};
-const mlRow=b=>{const open=mlOpen===b.id;
- return`<div class="qi mli${open?" on":""}" data-ml="${esc(b.id)}" role="button" aria-expanded="${open}"><div class="qc">${cover(b)}</div><div class="qm"><div class="qt">${esc(b.pending?"ISBN "+b.isbn:b.title)}</div><div class="qs">${mlSub(b)}</div></div><span class="mlch">${ic("chev",16)}</span></div>`+
-  (open?`<div class="mled" data-ed="${esc(b.id)}">
-   <div class="two">${ML_K.map(([k,l,ph])=>`<div><label>${l}</label><input data-k="${k}" value="${esc(b[k]||"")}"${ph?` placeholder="${ph}"`:""}${k==="price"?' inputmode="decimal"':""} enterkeyhint="done"></div>`).join("")}</div>
-   <div class="acts"><button class="btn" data-mla="full">${ic("pencil",16)}完整編輯</button><span class="sp"></span><button class="btn" data-mla="cancel">取消</button><button class="btn pri" data-mla="save">${ic("check",16)}儲存</button></div></div>`:"")};
+const mlRow=b=>`<div class="mr" data-id="${esc(b.id)}"><div class="mrh"><a class="mt" data-go="#/book/${esc(b.id)}/edit">${esc(b.pending?"ISBN "+b.isbn:b.title||"（未命名）")}</a><span class="ms"></span></div>
+ <div class="mf">${ML_K.map(([k,l])=>`<input data-k="${k}" value="${esc(b[k]||"")}" placeholder="${l}" aria-label="${l}"${k==="price"?' inputmode="decimal"':""} enterkeyhint="next" autocomplete="off">`).join("")}</div></div>`;
 function renderList(){
- const el=$("#ml");if(!el)return;
  const l=mlList();
  $("#ml_n").textContent=l.length===books.length?"共 "+books.length+" 本":"符合 "+l.length+" / "+books.length+" 本";
- el.innerHTML=l.length?l.map(mlRow).join(""):`<p class="mlnone">${mlF==="all"?"沒有符合的書":"沒有"+ML_F[mlF]+"的書"}</p>`;
+ $("#ml").innerHTML=l.length?l.map(mlRow).join(""):`<p class="mlnone">${mlF==="all"?"沒有符合的書":"沒有"+ML_F[mlF]+"的書"}</p>`;
 }
-// 編輯中的欄位跟原本不同就算有修改
-const mlVals=ed=>Object.fromEntries(ML_K.map(([k])=>[k,ed.querySelector(`[data-k="${k}"]`).value.trim()]));
-const mlDirty=()=>{const ed=$("#ml .mled");if(!ed)return false;const b=books.find(x=>x.id===ed.dataset.ed);if(!b)return false;
- const v=mlVals(ed);return ML_K.some(([k])=>v[k]!==String(b[k]||"").trim())};
-async function mlToggle(id){
- if(mlOpen&&mlOpen!==id&&mlDirty()&&!await dlg({title:"放棄修改？",msg:"剛才編輯的內容還沒儲存。",ok:"放棄",danger:true}))return;
- mlOpen=mlOpen===id?null:id;renderList();
- const ed=$("#ml .mled");if(ed)ed.scrollIntoView({block:"nearest",behavior:"smooth"});
-}
-function mlSave(){
- const ed=$("#ml .mled");if(!ed)return;const b=books.find(x=>x.id===ed.dataset.ed);if(!b)return;
- const v=mlVals(ed);v.pubDate=normDate(v.pubDate)||v.pubDate;
- if(ML_K.some(([k])=>v[k]!==String(b[k]||"").trim())){Object.assign(b,v);b.updatedAt=Date.now();save();toast("已儲存")}
- mlOpen=null;renderList();$("#mst").innerHTML=meStats();
-}
-function bindList(){
+function bookList(){
+ setTitle("藏書清單");
+ app.innerHTML=`<div class="sech mlh"><h2>藏書清單</h2><span class="cnt" id="ml_n"></span></div>
+ <label class="search">${ic("search",18)}<input id="ml_q" type="search" placeholder="搜尋書名、作者、出版社、ISBN" value="${esc(mlQ)}" enterkeyhint="search"></label>
+ <div class="chips mlfs" id="ml_f">${Object.entries(ML_F).map(([k,l])=>`<button class="chip${mlF===k?" on":""}" data-f="${k}">${l}</button>`).join("")}</div>
+ <div class="mf mlcols" aria-hidden="true">${ML_K.map(([,l])=>`<span>${l}</span>`).join("")}</div>
+ <div id="ml"></div>`;
  const el=$("#ml");
  $("#ml_q").oninput=e=>{mlQ=e.target.value;renderList()};
  $("#ml_q").onkeydown=e=>{if(e.key==="Enter")e.target.blur()};
  $("#ml_f").onclick=e=>{const c=e.target.closest("[data-f]");if(!c)return;mlF=c.dataset.f;
   $("#ml_f").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));renderList()};
- el.onclick=e=>{
-  const a=e.target.closest("[data-mla]");
-  if(a){const id=a.closest(".mled").dataset.ed;
-   if(a.dataset.mla==="save")return mlSave();
-   if(a.dataset.mla==="cancel"){mlOpen=null;return renderList()}
-   if(a.dataset.mla==="full"){mlOpen=null;return go("#/book/"+id+"/edit")}}
-  const r=e.target.closest("[data-ml]");if(r)mlToggle(r.dataset.ml)};
- el.onkeydown=e=>{if(!e.target.closest(".mled"))return;
-  if(e.key==="Enter"){e.preventDefault();mlSave()}else if(e.key==="Escape"){mlOpen=null;renderList()}};
+ // 離開欄位（值有變）就存；只更新這一格，不重畫清單，篩選中的書也不會在輸入時消失
+ el.addEventListener("change",e=>{const i=e.target.closest("input[data-k]");if(!i)return;
+  const r=i.closest(".mr"),b=books.find(x=>x.id===r.dataset.id);if(!b)return;
+  const k=i.dataset.k,v=i.value.trim();i.value=v;if(v===String(b[k]||"").trim())return;
+  b[k]=v;b.updatedAt=Date.now();save();
+  const m=r.querySelector(".ms");m.textContent="已儲存";clearTimeout(m._t);m._t=setTimeout(()=>{m.textContent=""},1500)});
+ // 鍵盤的「下一個」直接跳到下一格，可以一路往下填
+ el.addEventListener("keydown",e=>{if(e.key!=="Enter"||!e.target.matches("input[data-k]"))return;e.preventDefault();
+  const all=[...el.querySelectorAll("input[data-k]")],n=all[all.indexOf(e.target)+1];if(n)n.focus();else e.target.blur()});
  renderList();
 }
 
