@@ -143,9 +143,25 @@ input::placeholder{color:var(--sub);opacity:.8}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .acts{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.seg{display:flex;padding:4px;gap:4px;border-radius:12px;background:var(--gl);box-shadow:inset 0 1px 2px rgba(0,0,0,.18),inset 0 0 0 .5px var(--line);margin-top:14px}
-.seg button{flex:1;font:inherit;font-weight:500;font-size:14px;line-height:32px;color:var(--sub);background:transparent;border:0;border-radius:8px;padding:0;cursor:pointer;transition:background .2s,color .2s,box-shadow .2s}
-.seg button.on{color:var(--ink);background:var(--lg-ind);box-shadow:var(--spec),var(--lg-sh1)}
+/* 設定頁的開關與分段控件：liquidglass.dev 的 <lg-switch>、<lg-segmented>（按住時變成會折射的玻璃）
+   --lg-surface 要跟後面的面板同色：按住時玻璃會蓋到開關軌道外面，看到的就是這個顏色 */
+:root{--lg-on:#34c759;--lg-accent:var(--ink);--lg-text:var(--ink);--lg-text-muted:var(--sub);--lg-focus:var(--acc);
+ --lg-track:#e3e3e6;--lg-track-off:#d1d1d6;--lg-surface:#ffffff;--sw-surface:#f9f9f9}
+:root[data-theme="dark"]{--lg-on:#30d158;--lg-track:#2c2c2e;--lg-track-off:#3a3a3c;--lg-surface:#5b5b5f;--sw-surface:#272727;
+ --lg-shadow-1:0 1px 3px rgba(0,0,0,.4);--lg-shadow-2:0 4px 12px rgba(0,0,0,.45)}
+lg-segmented.thseg{display:flex;width:100%;margin-top:14px}
+lg-segmented.thseg .lg-seg__option{flex:1;min-width:0}
+lg-switch.navsw{display:flex;width:100%;margin-top:18px;--lg-surface:var(--sw-surface)}
+lg-switch.navsw .lg-switch__label{margin:0;font-size:1rem;font-weight:500;color:var(--ink)}
+/* 元件還沒載入（或載入失敗）時的備用樣子 */
+lg-segmented.thseg:not(:defined){padding:4px;gap:4px;border-radius:12px;background:var(--lg-track)}
+lg-segmented.thseg:not(:defined) button{flex:1;font:inherit;font-size:14px;line-height:32px;border:0;border-radius:8px;background:transparent;color:var(--sub)}
+lg-segmented.thseg:not(:defined) button[aria-checked="true"]{background:var(--lg-surface);color:var(--ink)}
+lg-switch.navsw:not(:defined){visibility:hidden}
+.navsw-fb{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font-size:1rem;color:var(--ink)}
+.navsw-fb input{width:auto}
+/* 導航欄不顯示文字 */
+#dock.nolabel .ltb-item span,#dock.nolabel .ltb-copy i{display:none}
 
 /* panes */
 .pane{border-radius:24px;padding:20px}
@@ -501,7 +517,9 @@ const NI={
  back:'<path d="m14.5 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
  cfg:'<path d="M3.5 6.5h2.2M12.3 6.5h8.2M3.5 12h7.7M17.8 12h2.7M3.5 17.5h4.2M14.3 17.5h6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="6.5" r="2.9"/><circle cx="14.5" cy="12" r="2.9"/><circle cx="11" cy="17.5" r="2.9"/>',
  me:'<rect x="3.2" y="6" width="5" height="13" rx="1.3"/><rect x="9.4" y="3" width="5.6" height="16" rx="1.3"/><rect x="16" y="6.6" width="4.6" height="12.4" rx="1.3" transform="rotate(12 20.6 19)"/><rect x="2.5" y="19.8" width="19" height="2" rx="1"/>'};
+let navLabels=true;try{navLabels=localStorage.getItem("bookshelf.navlabels")!=="0"}catch(e){}
 function renderNav(){
+ $("#dock").classList.toggle("nolabel",!navLabels);
  const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
  const cur=h==="#/"||h==="#"||sub?0:h.startsWith("#/add")?1:h.startsWith("#/settings")?2:h.startsWith("#/me")?3:-1;
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
@@ -1020,6 +1038,8 @@ function statusText(){
 }
 
 // ===== 外觀 =====
+const LG_URL="https://liquidglass.dev/lib/components.js";
+let lgP=null;const lgLoad=()=>lgP||(lgP=import(LG_URL).then(()=>true,()=>false));
 const themeMode=()=>{try{const t=localStorage.getItem("bookshelf.theme");return t==="light"||t==="auto"?t:"dark"}catch(e){return"dark"}};
 function applyTheme(){
  const m=themeMode(),t=m==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;
@@ -1100,7 +1120,8 @@ function settings(){
  setTitle("設定");
  const base=cfg.url||(PROXY?PROXY.replace(/\?.*$/,""):""),mode=themeMode();
  app.innerHTML=`<div class="pane glass"><h2>外觀</h2><p class="sub">自動會跟隨手機的深色模式設定。</p>
- <div class="seg" id="seg">${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button data-th="${v}" class="${mode===v?"on":""}">${l}</button>`).join("")}</div></div>
+ <lg-segmented class="thseg" id="seg" value="${mode}" label="外觀">${[["auto","自動"],["light","淺色"],["dark","深色"]].map(([v,l])=>`<button value="${v}" aria-checked="${mode===v}">${l}</button>`).join("")}</lg-segmented>
+ <lg-switch class="navsw" id="s_lab"${navLabels?" checked":""}>顯示導航欄文字</lg-switch></div>
  <div class="pane glass"><h2>跨裝置同步</h2><p class="sub">每台裝置填入相同的 Worker 網址與同步密碼，書架會自動合併；填好後也會用同一個 Worker 查詢 ISBN。</p>
  <label>Worker 網址</label><input id="s_url" value="${esc(base)}" placeholder="https://isbn-lookup.你的帳號.workers.dev" autocapitalize="off" autocorrect="off" inputmode="url">
  <label>同步密碼（SYNC_TOKEN）</label><input id="s_tok" type="password" value="${esc(cfg.token||"")}" autocomplete="off">
@@ -1111,6 +1132,15 @@ function settings(){
  <div class="pane glass"><h2>重新整理</h2><p class="sub">重新載入整個 App，抓取網站最新版本。從主畫面開啟時沒有瀏覽器的重新整理鍵，可以用這裡。</p>
  <div class="acts"><button class="btn" id="x_reload">${ic("refresh",18)}重新整理</button></div></div>
 `;
+ $("#seg").addEventListener("change",e=>{if(e.detail&&e.detail.value)setTheme(e.detail.value)});
+ $("#seg").addEventListener("click",e=>{const b=e.target.closest("button[value]");if(!b||customElements.get("lg-segmented"))return;
+  setTheme(b.value);$("#seg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-checked",x===b))});
+ $("#s_lab").addEventListener("change",e=>{navLabels=!!e.target.checked;try{localStorage.setItem("bookshelf.navlabels",navLabels?"1":"0")}catch(_){}
+  $("#dock").classList.toggle("nolabel",!navLabels);nav&&nav.layout()});
+ // 元件載不到（離線）時，開關換成一般的勾選框
+ lgLoad().then(ok=>{const sw=$("#s_lab");if(ok||!sw||customElements.get("lg-switch"))return;
+  sw.outerHTML=`<label class="navsw-fb"><span>顯示導航欄文字</span><input type="checkbox" id="s_lab_fb"${navLabels?" checked":""}></label>`;
+  $("#s_lab_fb").onchange=e=>{navLabels=e.target.checked;try{localStorage.setItem("bookshelf.navlabels",navLabels?"1":"0")}catch(_){}$("#dock").classList.toggle("nolabel",!navLabels)}});
  $("#s_go").onclick=async()=>{
   const url=$("#s_url").value.trim().replace(/\?.*$/,"").replace(/\/+$/,""),tok=$("#s_tok").value.trim();
   if(!/^https:\/\//.test(url)||!tok){$("#s_msg").textContent="請填入 https 開頭的 Worker 網址與同步密碼";return}
@@ -1181,7 +1211,6 @@ document.addEventListener("dragstart",e=>{if(!e.target.closest("input,textarea")
 // ===== 初始化 =====
 document.addEventListener("click",e=>{
  const dk=e.target.closest("[data-dk]");if(dk){const f=dockActs[dk.dataset.dk];navTap=false;f&&f();return}
- const th=e.target.closest("[data-th]");if(th){setTheme(th.dataset.th);document.querySelectorAll("#seg button").forEach(b=>b.classList.toggle("on",b===th));return}
  if(e.target.closest("[data-undo]"))return undoLast();
  const rs=e.target.closest("[data-rnseries]");if(rs)return renameSeries(rs.dataset.rnseries);
  const rc=e.target.closest("[data-rncat]");if(rc)return renameCat(rc.dataset.sk,rc.dataset.rncat);
@@ -1198,7 +1227,7 @@ addEventListener("hashchange",route);
 // 清除先前版本留下的離線快取與 Service Worker
 if("serviceWorker" in navigator){navigator.serviceWorker.getRegistrations().then(rs=>{rs.forEach(r=>r.unregister());if(rs.length&&window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)))}).catch(()=>{})}
 const hideSplash=()=>{const sp=$("#splash");if(!sp)return;setTimeout(()=>{sp.classList.add("out");setTimeout(()=>sp.remove(),500)},Math.max(0,1050-performance.now()))};
-applyTheme();ensureK().finally(()=>{route();hideSplash();sync();setTimeout(fillPending,1500)});
+applyTheme();ensureK().finally(()=>{route();hideSplash();sync();setTimeout(fillPending,1500);setTimeout(lgLoad,2500)});
 </script>
 </body>
 </html>
