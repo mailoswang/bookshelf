@@ -14,8 +14,8 @@
 <script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.3.1/liquid-tabbar.min.css">
-<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.3.1/liquid-tabbar.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.3.2/liquid-tabbar.min.css">
+<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.3.2/liquid-tabbar.min.js"></script>
 <style>
 :root{
  --gap:0px;
@@ -78,7 +78,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* ===== 底部導航欄：liquid-tabbar（https://github.com/mailoswang/liquid-tabbar），這裡只把書櫃的主題色接過去 ===== */
 .ltb{--ltb-bottom:calc(var(--navb) + var(--kb,0px));--ltb-ink:var(--ink);--ltb-accent:var(--nav-on);--ltb-focus:var(--acc);
  --ltb-ind:var(--nav-ind);--ltb-lift-ring:var(--lift-ring);--ltb-lift-edge:var(--lift-edge);--ltb-lift-shadow:var(--lift-sh);
- --ltb-bg:var(--nav-bg);--ltb-rim:var(--nav-rim);--ltb-shadow:var(--nav-drop)}
+ --ltb-bg:var(--nav-bg);--ltb-rim:var(--nav-rim)}
 /* 同步中／同步失敗：設定圖示右上角的小圓點 */
 .ltb.syncing [data-id="cfg"]::after,.ltb.err [data-id="cfg"]::after{content:"";position:absolute;top:8px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:var(--sub)}
 .ltb.syncing [data-id="cfg"]::after{animation:pulse 1s ease-in-out infinite}
