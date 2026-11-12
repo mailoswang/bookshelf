@@ -150,8 +150,8 @@ input::placeholder{color:var(--sub);opacity:.8}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 /* 設定頁的開關與分段控件：動畫照 liquidglass.dev（按下變大、滑動時依速度拉長、彈簧回彈），
    但不用玻璃折射：折射每一格都要重算貼圖、重編 PNG，手機上會卡 */
-:root{--ctl-on:#34c759;--ctl-off:#d1d1d6;--ctl-track:#e3e3e6;--ctl-ind:#fff;--ctl-sh:0 1px 3px rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.08)}
-:root[data-theme="dark"]{--ctl-on:#30d158;--ctl-off:#3a3a3c;--ctl-track:#2c2c2e;--ctl-ind:#5b5b5f;--ctl-sh:0 1px 3px rgba(0,0,0,.4),0 3px 8px rgba(0,0,0,.3)}
+:root{--ctl-on:var(--acc);--ctl-off:#d1d1d6;--ctl-track:#e3e3e6;--ctl-ind:#fff;--ctl-sh:0 1px 3px rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.08)}
+:root[data-theme="dark"]{--ctl-on:var(--acc);--ctl-off:#3a3a3c;--ctl-track:#2c2c2e;--ctl-ind:#5b5b5f;--ctl-sh:0 1px 3px rgba(0,0,0,.4),0 3px 8px rgba(0,0,0,.3)}
 .seg2{position:relative;display:flex;padding:4px;gap:4px;margin-top:14px;border-radius:12px;background:var(--ctl-track)}
 .seg2 button{position:relative;z-index:1;flex:1;min-width:0;height:32px;font:inherit;font-size:14px;font-weight:500;border:0;border-radius:8px;background:transparent;color:var(--sub);cursor:pointer;transition:color .2s}
 .seg2 button[aria-checked="true"]{color:var(--ink)}
