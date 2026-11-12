@@ -84,13 +84,13 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 .ltb.syncing [data-id="cfg"]::after{animation:pulse 1s ease-in-out infinite}
 .ltb.err [data-id="cfg"]::after{background:var(--acc)}
 .pacts,.dlg-p.glass,.toast{border:0;background:var(--lg-tint);backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);box-shadow:var(--spec),var(--lg-drop)}
-/* 操作列：跟導航欄同樣的中灰玻璃（上緣略亮），在純黑背景上也看得出形狀 */
-.pacts{background:var(--bar-bg);backdrop-filter:blur(2px) saturate(1.5);-webkit-backdrop-filter:blur(2px) saturate(1.5)}
-.pacts::before,.dlg-p::before{content:none;position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+/* 操作列與對話框：和導航欄同一組液態玻璃（同樣的底色漸層、輕模糊、邊緣光與外圈亮線，沒有外陰影） */
+.pacts,.dlg-p.glass{background:var(--nav-bg);backdrop-filter:blur(2px) saturate(1.5);-webkit-backdrop-filter:blur(2px) saturate(1.5);box-shadow:var(--nav-rim)}
+.pacts::before,.dlg-p::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
  padding:1.5px;background:linear-gradient(135deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 30%,rgba(255,255,255,0) 50%,rgba(255,255,255,.04) 70%,rgba(255,255,255,.18));
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
-/* 操作列：一整圈亮邊（上緣最亮、下緣次之），黑底上輪廓清楚 */
-.pacts::before{padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.16) 35%,rgba(255,255,255,.12) 65%,rgba(255,255,255,.26))}
+/* 外圈亮線：和導航欄一樣，上緣最亮、下緣次之 */
+.pacts::before,.dlg-p::before{padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.16) 35%,rgba(255,255,255,.12) 65%,rgba(255,255,255,.26))}
 /* 頁面自己的操作（儲存、確認入庫、快速入庫…）：浮在導航欄上方的一條小玻璃列 */
 .pacts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navb) + 72px + var(--kb,0px));z-index:29;
  width:min(calc(100% - 42px),380px);display:flex;gap:4px;padding:4px;border-radius:999px;animation:none!important}
