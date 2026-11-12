@@ -519,21 +519,31 @@ const NI={
  scan:'<path d="M3 8V6.5A3.5 3.5 0 0 1 6.5 3H8M16 3h1.5A3.5 3.5 0 0 1 21 6.5V8M21 16v1.5a3.5 3.5 0 0 1-3.5 3.5H16M8 21H6.5A3.5 3.5 0 0 1 3 17.5V16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="7" y="7.5" width="2.4" height="9" rx="1.2"/><rect x="10.8" y="7.5" width="2.4" height="9" rx="1.2"/><rect x="14.6" y="7.5" width="2.4" height="9" rx="1.2"/>',
  back:'<path d="m14.5 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
  cfg:'<path d="M3.5 6.5h2.2M12.3 6.5h8.2M3.5 12h7.7M17.8 12h2.7M3.5 17.5h4.2M14.3 17.5h6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="6.5" r="2.9"/><circle cx="14.5" cy="12" r="2.9"/><circle cx="11" cy="17.5" r="2.9"/>',
+ edit:'<path d="M15.4 4.1a2.5 2.5 0 0 1 3.5 0l1 1a2.5 2.5 0 0 1 0 3.5L9.6 18.9l-5.1 1.5a.7.7 0 0 1-.9-.9l1.5-5.1z"/><rect x="12.5" y="18.9" width="8.5" height="2.2" rx="1.1"/>',
+ rename:'<rect x="2.6" y="6.4" width="13.4" height="11.2" rx="2.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M6.3 12h5.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.6 4.2v15.6M17.4 4.2h4.4M17.4 19.8h4.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
  me:'<rect x="3.2" y="6" width="5" height="13" rx="1.3"/><rect x="9.4" y="3" width="5.6" height="16" rx="1.3"/><rect x="16" y="6.6" width="4.6" height="12.4" rx="1.3" transform="rotate(12 20.6 19)"/><rect x="2.5" y="19.8" width="19" height="2" rx="1"/>'};
 let navLabels=true;try{navLabels=localStorage.getItem("bookshelf.navlabels")!=="0"}catch(e){}
+let navCur=-1;
 function renderNav(){
  $("#dock").classList.toggle("nolabel",!navLabels);
  const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
  const cur=h==="#/"||h==="#"||sub?"home":h.startsWith("#/add")?"scan":h.startsWith("#/settings")?"cfg":h.startsWith("#/me")?"me":-1;
+ // 書目頁、系列頁：第二格換成這一頁的動作（編輯／重新命名）；其他深層頁面是設定
+ const bk=h.match(/^#\/book\/([^/]+)$/),sr=h.match(/^#\/series\/([^/]+)$/);
+ const mid=bk?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/book/"+bk[1]+"/edit")}
+  :sr?{id:"rename",label:"重新命名",icon:NI.rename,act:true,fn:()=>renameSeries(decodeURIComponent(sr[1]))}
+  :{id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")};
  // 深層頁面（書目、系列、編輯、我的書櫃底下）：拿掉「入庫」，左邊另外一顆圓形「回上頁」按鈕
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
   ...(deep?[]:[{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}}]),
-  {id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")},
+  deep?mid:{id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")},
   {id:"me",label:"我的書櫃",icon:NI.me,fn:()=>go("#/me")}];
+ navCur=cur;
  // 點導航欄直接切換、不播封面飛行動畫；按住目前那格的「首頁」＝回到頂端
+ // 動作格（編輯、重新命名）不是分頁：膠囊回到原本那格，再執行動作
  // 換頁會重畫整頁（首頁幾十張封面），等膠囊滑到位才換，動畫起步才不會卡住
  nav=nav||new LiquidTabbar("#dock",{waitForPill:true,
-  onSelect:a=>{navTap=true;a.fn()},
+  onSelect:a=>{if(a.act){nav.setActive(navCur);navTap=false;a.fn();return}navTap=true;a.fn()},
   onReselect:(a,i,{source})=>{if(source==="click"){navTap=true;a.fn()}else if(a.id==="home")a.fn();else if(a.id==="me"&&location.hash!=="#/me"){navTap=true;a.fn()}},
   onSide:()=>{navTap=false;goBack()}});
  nav.set({side:deep?{id:"back",label:"回上頁",icon:NI.back}:null,items,active:cur});
@@ -694,7 +704,7 @@ function series(k){
  };
  app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(f)}</div><div class="hcv">${cover(f)}</div><div class="hk">系列</div><h1>${esc(f.series||f.title)}</h1><p class="hm">${esc(f.author||"作者未填")}</p>
   <div class="pills"><span class="pill">${g.l.length} 本</span>${many?`<span class="pill">${cats.length} 個分類</span>`:""}</div>
-  <div class="hacts"><button class="btn dim" data-rnseries="${esc(k)}">${ic("pencil",18)}重新命名</button></div></section>`+cats.map(sec).join("");
+  </section>`+cats.map(sec).join("");
 }
 function goSeries(name){const nh="#/series/"+encodeURIComponent(skeyS(name));if(location.hash===nh)route();else location.hash=nh}
 async function renameSeries(k){
@@ -890,7 +900,7 @@ function view(b){
  app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(b)}</div><div class="hcv">${cover(b)}</div>
   <div class="hk">${b.vol!=null?"第 "+b.vol+" 集":"藏書"}</div><h1>${esc(name)}</h1>${b.author?`<p class="hm">${esc(b.author)}</p>`:""}
   ${b.edition?`<div class="pills"><span class="pill">${esc(b.edition)}</span></div>`:""}
-  <div class="hacts"><button class="btn play" data-go="#/book/${b.id}/edit">${ic("pencil",18)}編輯</button></div></section>
+  </section>
  ${b.pending||b.refill?`<p class="msg c">這本書的資料還沒補齊，可以按「編輯」重新查詢或手動填寫。</p>`:""}
  ${rows.length?`<div class="pane glass" style="margin-top:18px"><dl class="dl">${rows.map(([k,v,h])=>`<dt>${k}</dt><dd>${h?`<span class="lnk" data-go="${h}">${esc(v)}</span>`:esc(v).replace(/\n/g,"<br>")}</dd>`).join("")}</dl></div>`:""}`;
 }
@@ -1246,7 +1256,6 @@ document.addEventListener("dragstart",e=>{if(!e.target.closest("input,textarea")
 document.addEventListener("click",e=>{
  const dk=e.target.closest("[data-dk]");if(dk){const f=dockActs[dk.dataset.dk];navTap=false;f&&f();return}
  if(e.target.closest("[data-undo]"))return undoLast();
- const rs=e.target.closest("[data-rnseries]");if(rs)return renameSeries(rs.dataset.rnseries);
  const rc=e.target.closest("[data-rncat]");if(rc)return renameCat(rc.dataset.sk,rc.dataset.rncat);
  const tg=e.target.closest("[data-tog]");if(tg){const k=tg.dataset.tog;openCats.has(k)?openCats.delete(k):openCats.add(k);return route()}
  const c=e.target.closest("[data-go]");if(c){navTap=false;cvSrc=c.querySelector(".cover");go(c.dataset.go)}
