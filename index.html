@@ -14,8 +14,8 @@
 <script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.4.0/liquid-tabbar.min.css">
-<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.4.0/liquid-tabbar.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.5.0/liquid-tabbar.min.css">
+<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.5.0/liquid-tabbar.min.js"></script>
 <style>
 :root{
  --gap:0px;
@@ -524,17 +524,19 @@ let navLabels=true;try{navLabels=localStorage.getItem("bookshelf.navlabels")!=="
 function renderNav(){
  $("#dock").classList.toggle("nolabel",!navLabels);
  const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
- const cur=h==="#/"||h==="#"||sub?0:h.startsWith("#/add")?1:h.startsWith("#/settings")?2:h.startsWith("#/me")?3:-1;
+ const cur=h==="#/"||h==="#"||sub?"home":h.startsWith("#/add")?"scan":h.startsWith("#/settings")?"cfg":h.startsWith("#/me")?"me":-1;
+ // 深層頁面（書目、系列、編輯、我的書櫃底下）：拿掉「入庫」，左邊另外一顆圓形「回上頁」按鈕
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
-  deep?{id:"back",label:"回上頁",icon:NI.back,fn:goBack}:{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}},
+  ...(deep?[]:[{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}}]),
   {id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")},
   {id:"me",label:"我的書櫃",icon:NI.me,fn:()=>go("#/me")}];
- // 點導航欄（回上頁除外）直接切換、不播封面飛行動畫；按住目前那格的「首頁」＝回到頂端
+ // 點導航欄直接切換、不播封面飛行動畫；按住目前那格的「首頁」＝回到頂端
  // 換頁會重畫整頁（首頁幾十張封面），等膠囊滑到位才換，動畫起步才不會卡住
  nav=nav||new LiquidTabbar("#dock",{waitForPill:true,
-  onSelect:a=>{navTap=a.id!=="back";a.fn()},
-  onReselect:(a,i,{source})=>{if(source==="click"){navTap=a.id!=="back";a.fn()}else if(a.id==="home")a.fn();else if(a.id==="me"&&location.hash!=="#/me"){navTap=true;a.fn()}}});
- nav.set({items,active:cur});
+  onSelect:a=>{navTap=true;a.fn()},
+  onReselect:(a,i,{source})=>{if(source==="click"){navTap=true;a.fn()}else if(a.id==="home")a.fn();else if(a.id==="me"&&location.hash!=="#/me"){navTap=true;a.fn()}},
+  onSide:()=>{navTap=false;goBack()}});
+ nav.set({side:deep?{id:"back",label:"回上頁",icon:NI.back}:null,items,active:cur});
 }
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
 function setActs(list){
