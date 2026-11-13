@@ -537,7 +537,7 @@ let navCur=-1;
 function renderNav(){
  $("#dock").classList.toggle("nolabel",!navLabels);
  const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
- // 編輯頁（書目、系列、新書確認）：三格是「首頁、編輯、我的書櫃」，膠囊停在「編輯」
+ // 編輯頁（書目、系列、新書確認）：「首頁、編輯」，膠囊停在「編輯」
  const ed=/^#\/(book\/[^/]+\/edit|series\/[^/]+\/edit|edit\/)/.test(h);
  const cur=ed?"edit":h==="#/"||h==="#"||sub?"home":h.startsWith("#/add")?"scan":h.startsWith("#/settings")?"cfg":h.startsWith("#/me")?"me":-1;
  // 書目頁、系列頁：第二格是「編輯」（動作，前往這一頁的編輯頁）；其他深層頁面是設定
@@ -546,11 +546,11 @@ function renderNav(){
   :bk?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/book/"+bk[1]+"/edit")}
   :sr?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/series/"+sr[1]+"/edit")}
   :{id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")};
- // 深層頁面（書目、系列、編輯、我的書櫃底下）：拿掉「入庫」，左邊另外一顆圓形「回上頁」按鈕
+ // 深層頁面（書目、系列、編輯、我的書櫃底下）：拿掉「入庫」，左邊另外一顆圓形「回上頁」按鈕；書目、系列、編輯頁再拿掉「我的書櫃」
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
   ...(deep?[]:[{id:"scan",label:"入庫",icon:NI.scan,fn:()=>{sess=[];go("#/add")}}]),
   deep?mid:{id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")},
-  {id:"me",label:"我的書櫃",icon:NI.me,fn:()=>go("#/me")}];
+  ...(sub?[]:[{id:"me",label:"我的書櫃",icon:NI.me,fn:()=>go("#/me")}])];   // 書目、系列、編輯頁不放「我的書櫃」（藏書清單維持）
  navCur=cur;
  // 點導航欄直接切換、不播封面飛行動畫；按住目前那格的「首頁」＝回到頂端
  // 動作格（編輯、重新命名）不是分頁：膠囊回到原本那格，再執行動作
