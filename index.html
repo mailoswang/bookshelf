@@ -8,10 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="書櫃">
 <meta name="theme-color" content="#141414">
+<meta name="color-scheme" content="dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>我的書櫃</title>
-<script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t})()</script>
+<script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t;var cs=document.querySelector('meta[name="color-scheme"]');if(cs)cs.content=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.5.0/liquid-tabbar.min.css">
@@ -313,13 +314,18 @@ main.still>*{animation:none}
 /* edit */
 .editgrid{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:start}
 /* 編輯系列：挑封面 */
+.vh{position:absolute;clip-path:inset(50%);overflow:hidden;width:1px;height:1px;margin:-1px;padding:0;border:0;white-space:nowrap}
+.scvf{border:0;margin:14px 0 0;padding:0;min-width:0}
+.scvf legend{display:block;padding:0;font-size:.78rem;font-weight:500;color:var(--sub);margin:0 0 5px}
+#s_name:user-invalid{box-shadow:0 0 0 2px var(--danger)}
 .scvh{margin:4px 0 0;font-size:.85rem;color:var(--sub)}
 .scvs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px 10px;margin-top:12px}
-.scv{display:block;min-width:0;padding:0;border:0;background:none;color:var(--ink);font:inherit;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.scv .cv{margin:0;border-radius:8px;outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s}
-.scv.on .cv{outline-color:var(--acc)}
+.scv{position:relative;display:block;min-width:0;margin:0;padding:0;font:inherit;color:var(--ink);text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.scv .cv{margin:0;border-radius:8px;outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s,box-shadow .15s}
+.scv:has(input:checked) .cv{outline-color:var(--acc)}
+.scv:has(input:focus-visible) .cv{box-shadow:0 0 0 9px color-mix(in srgb,var(--acc) 35%,transparent)}
 .scv span{display:block;margin-top:8px;font-size:.78rem;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.scv.on span{color:var(--ink)}
+.scv:has(input:checked) span{color:var(--ink)}
 .editgrid .cvcol .cv{margin:0}
 @media(max-width:600px){.editgrid{grid-template-columns:1fr}.cvcol{width:150px;margin:0 auto}}
 .irow{display:flex;gap:8px;align-items:center}
@@ -725,16 +731,17 @@ function goSeries(name){const nh="#/series/"+encodeURIComponent(skeyS(name));if(
 function seriesEdit(k){
  const g=groups().find(x=>x.k===k);if(!g){go("#/",true);return}
  setTitle("編輯系列");
- const name=g.first.series||g.first.title;let pick=g.cv.id;
+ const name=g.first.series||g.first.title;
  const lab=b=>b.vol!=null?"第 "+b.vol+" 集":(b.pending?"ISBN "+b.isbn:b.title||"");
+ // 封面是「多選一」：一組單選按鈕（可用方向鍵切換，輔助技術會念出第幾個），整張封面就是它的標籤
  app.innerHTML=`<div class="pane glass"><div class="fm" style="margin-top:-14px">
-  <label>系列名稱</label><input id="s_name" value="${esc(name)}" placeholder="系列名稱">
-  <label>系列封面</label><p class="scvh">從系列裡的書挑一本，當作首頁與系列頁的封面。</p>
-  <div class="scvs" id="scvs">${g.l.map(b=>`<button type="button" class="scv${b.id===pick?" on":""}" data-scv="${esc(b.id)}" aria-pressed="${b.id===pick}"><div class="cv">${cover(b)}</div><span>${esc(lab(b))}</span></button>`).join("")}</div></div></div>`;
- $("#scvs").onclick=e=>{const c=e.target.closest("[data-scv]");if(!c)return;pick=c.dataset.scv;
-  $("#scvs").querySelectorAll(".scv").forEach(x=>{const on=x.dataset.scv===pick;x.classList.toggle("on",on);x.setAttribute("aria-pressed",on)})};
+  <label for="s_name">系列名稱</label><input id="s_name" name="series" value="${esc(name)}" required maxlength="80" enterkeyhint="done">
+  <fieldset class="scvf"><legend>系列封面</legend><p class="scvh" id="scvh">從系列裡的書挑一本，當作首頁與系列頁的封面。</p>
+  <div class="scvs" aria-describedby="scvh">${g.l.map(b=>`<label class="scv"><input class="vh" type="radio" name="scv" value="${esc(b.id)}"${b.id===g.cv.id?" checked":""}><div class="cv">${cover(b)}</div><span>${esc(lab(b))}</span></label>`).join("")}</div></fieldset></div></div>`;
  const commit=async()=>{
-  const n=$("#s_name").value.trim();if(!n){await dlg({title:"請輸入系列名稱",msg:"系列名稱不能留白。",cancel:false,ok:"好"});return}
+  // 必填：空白時用瀏覽器原生的提示指出這一格，焦點也移過去（不另外跳對話框）
+  const inp=$("#s_name"),n=inp.value.trim();if(!n){inp.value="";inp.reportValidity();return}
+  const pick=(app.querySelector('input[name="scv"]:checked')||{}).value||g.cv.id;
   const now=Date.now();
   g.l.forEach(b=>{let ch=false;if(n!==name){b.series=n;ch=true}if(b.scv!==pick){b.scv=pick;ch=true}if(ch)b.updatedAt=now});
   save();toast("已儲存");
@@ -768,7 +775,7 @@ function scan(){
  scanDockFn();msg();renderQ();
  const submit=()=>{const v=$("#mi").value.replace(/[-\s]/g,"");if(!isbnOK(v)){$("#sm").textContent="ISBN 格式或檢查碼不正確";return}
   $("#mi").value="";if(quick){seen.set(v,Date.now());quickAdd(v)}else{stopScan();found(v)}};
- $("#mg").onclick=submit;$("#mi").onkeydown=e=>{if(e.key==="Enter")submit()};
+ $("#mg").onclick=submit;$("#mi").onkeydown=e=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229)submit()};
  const noCam=m=>{$("#sm").textContent=m;$("#sc").hidden=true};
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){noCam("此瀏覽器或連線方式無法使用鏡頭（需 HTTPS），請手動輸入 ISBN。");return}
  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false}).then(async s=>{
@@ -967,7 +974,7 @@ function edit(b,isNew){
   const a=e.target.closest("#addcat");if(!a)return;
   const inp=document.createElement("input");inp.className="chipin";inp.placeholder="分類名稱";inp.maxLength=20;a.replaceWith(inp);inp.focus();
   let done=false;const fin=()=>{if(done)return;done=true;const v=inp.value.trim();if(v){extra.push(v);curCat=v}renderCats()};
-  inp.onkeydown=ev=>{if(ev.key==="Enter"){ev.preventDefault();fin()}};inp.onblur=fin;
+  inp.onkeydown=ev=>{if(ev.key==="Enter"&&!ev.isComposing&&ev.keyCode!==229){ev.preventDefault();fin()}};inp.onblur=fin;   // 輸入法選字時的 Enter 不算送出
  };
  // 自動帶入：書名 → 系列／集數／分類（使用者手動改過的欄位不會被覆蓋）
  const auto=isNew?{series:g("series").value,vol:g("vol").value,cat:curCat}:{series:null,vol:null,cat:null};
@@ -1124,6 +1131,8 @@ const themeMode=()=>{try{const t=localStorage.getItem("bookshelf.theme");return 
 function applyTheme(){
  const m=themeMode(),t=m==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;
  document.documentElement.dataset.theme=t;
+ // 瀏覽器在 CSS 載入前就照這個決定底色與原生控制項的配色
+ const cs=document.querySelector('meta[name="color-scheme"]');if(cs)cs.content=t;
  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=t==="dark"?"#141414":"#f3f3f3";
 }
 function setTheme(m){try{localStorage.setItem("bookshelf.theme",m)}catch(e){}applyTheme()}
@@ -1180,7 +1189,7 @@ function bookList(){
  <div id="ml"></div>`;
  const el=$("#ml");
  $("#ml_q").oninput=e=>{mlQ=e.target.value;renderList()};
- $("#ml_q").onkeydown=e=>{if(e.key==="Enter")e.target.blur()};
+ $("#ml_q").onkeydown=e=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229)e.target.blur()};
  $("#ml_f").onclick=e=>{const c=e.target.closest("[data-f]");if(!c)return;mlF=c.dataset.f;
   $("#ml_f").querySelectorAll(".chip").forEach(x=>x.classList.toggle("on",x===c));renderList()};
  // 離開欄位（值有變）就存；只更新這一格，不重畫清單，篩選中的書也不會在輸入時消失
