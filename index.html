@@ -312,6 +312,14 @@ main.still>*{animation:none}
 
 /* edit */
 .editgrid{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:start}
+/* 編輯系列：挑封面 */
+.scvh{margin:4px 0 0;font-size:.85rem;color:var(--sub)}
+.scvs{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:14px 10px;margin-top:12px}
+.scv{display:block;min-width:0;padding:0;border:0;background:none;color:var(--ink);font:inherit;text-align:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.scv .cv{margin:0;border-radius:8px;outline:3px solid transparent;outline-offset:3px;transition:outline-color .15s}
+.scv.on .cv{outline-color:var(--acc)}
+.scv span{display:block;margin-top:8px;font-size:.78rem;font-weight:600;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scv.on span{color:var(--ink)}
 .editgrid .cvcol .cv{margin:0}
 @media(max-width:600px){.editgrid{grid-template-columns:1fr}.cvcol{width:150px;margin:0 auto}}
 .irow{display:flex;gap:8px;align-items:center}
@@ -463,8 +471,11 @@ function guessFromTitle(title){
  for(const c of catsOf(series)){if(nt.includes(norm(c))){cat=c;break}}
  return{series,vol,cat};
 }
+// 系列封面（cv）：系列裡的書記著 scv＝被選為封面那本的 id（跨裝置同步跟著書走）；沒選就用第一本
 function groups(){const g={};books.forEach(b=>{(g[skey(b)||b.id]??=[]).push(b)});
- return Object.entries(g).map(([k,l])=>{l.sort((a,b)=>(a.vol??1e9)-(b.vol??1e9)||a.date-b.date);return{k,l,first:l[0],last:Math.max(...l.map(x=>x.date||0))}})}
+ return Object.entries(g).map(([k,l])=>{l.sort((a,b)=>(a.vol??1e9)-(b.vol??1e9)||a.date-b.date);
+  const pick=[...l].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0)).map(x=>x.scv).find(id=>id&&l.some(x=>x.id===id));
+  return{k,l,first:l[0],cv:l.find(x=>x.id===pick)||l[0],last:Math.max(...l.map(x=>x.date||0))}})}
 (function(){let ch=false;
  for(const b of books){let t=clean(b.title),s=clean(b.series);
   const et=splitEdition(t),es=splitEdition(s);
@@ -520,18 +531,20 @@ const NI={
  back:'<path d="m14.5 5-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
  cfg:'<path d="M3.5 6.5h2.2M12.3 6.5h8.2M3.5 12h7.7M17.8 12h2.7M3.5 17.5h4.2M14.3 17.5h6.2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="6.5" r="2.9"/><circle cx="14.5" cy="12" r="2.9"/><circle cx="11" cy="17.5" r="2.9"/>',
  edit:'<path d="M15.4 4.1a2.5 2.5 0 0 1 3.5 0l1 1a2.5 2.5 0 0 1 0 3.5L9.6 18.9l-5.1 1.5a.7.7 0 0 1-.9-.9l1.5-5.1z"/><rect x="12.5" y="18.9" width="8.5" height="2.2" rx="1.1"/>',
- rename:'<rect x="2.6" y="6.4" width="13.4" height="11.2" rx="2.6" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M6.3 12h5.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.6 4.2v15.6M17.4 4.2h4.4M17.4 19.8h4.4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
  me:'<rect x="3.2" y="6" width="5" height="13" rx="1.3"/><rect x="9.4" y="3" width="5.6" height="16" rx="1.3"/><rect x="16" y="6.6" width="4.6" height="12.4" rx="1.3" transform="rotate(12 20.6 19)"/><rect x="2.5" y="19.8" width="19" height="2" rx="1"/>'};
 let navLabels=true;try{navLabels=localStorage.getItem("bookshelf.navlabels")!=="0"}catch(e){}
 let navCur=-1;
 function renderNav(){
  $("#dock").classList.toggle("nolabel",!navLabels);
  const h=location.hash||"#/",sub=/^#\/(book|series|edit)\//.test(h),deep=sub||h.startsWith("#/me/");
- const cur=h==="#/"||h==="#"||sub?"home":h.startsWith("#/add")?"scan":h.startsWith("#/settings")?"cfg":h.startsWith("#/me")?"me":-1;
- // 書目頁、系列頁：第二格換成這一頁的動作（編輯／重新命名）；其他深層頁面是設定
+ // 編輯頁（書目、系列、新書確認）：三格是「首頁、編輯、我的書櫃」，膠囊停在「編輯」
+ const ed=/^#\/(book\/[^/]+\/edit|series\/[^/]+\/edit|edit\/)/.test(h);
+ const cur=ed?"edit":h==="#/"||h==="#"||sub?"home":h.startsWith("#/add")?"scan":h.startsWith("#/settings")?"cfg":h.startsWith("#/me")?"me":-1;
+ // 書目頁、系列頁：第二格是「編輯」（動作，前往這一頁的編輯頁）；其他深層頁面是設定
  const bk=h.match(/^#\/book\/([^/]+)$/),sr=h.match(/^#\/series\/([^/]+)$/);
- const mid=bk?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/book/"+bk[1]+"/edit")}
-  :sr?{id:"rename",label:"重新命名",icon:NI.rename,act:true,fn:()=>renameSeries(decodeURIComponent(sr[1]))}
+ const mid=ed?{id:"edit",label:"編輯",icon:NI.edit,fn:()=>{}}
+  :bk?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/book/"+bk[1]+"/edit")}
+  :sr?{id:"edit",label:"編輯",icon:NI.edit,act:true,fn:()=>go("#/series/"+sr[1]+"/edit")}
   :{id:"cfg",label:"設定",icon:NI.cfg,fn:()=>go("#/settings")};
  // 深層頁面（書目、系列、編輯、我的書櫃底下）：拿掉「入庫」，左邊另外一顆圓形「回上頁」按鈕
  const items=[{id:"home",label:"首頁",icon:NI.home,fn:()=>{if(/^#?\/?$/.test(location.hash)){navTap=false;app.scrollTo({top:0,behavior:"smooth"});return}draft=null;go("#/")}},
@@ -563,6 +576,7 @@ function trackHash(h){if(hist.length>1&&hist[hist.length-2]===h)hist.pop();else 
 function go(h,rep){if(location.hash===h){route();return}if(rep){hist.pop();location.replace(h)}else location.hash=h}
 function parentOf(){const h=location.hash;
  if(h.startsWith("#/book/")){const q=h.slice(7).split("/");if(q[1]==="edit")return"#/book/"+q[0];const b=books.find(x=>x.id===q[0]);if(b&&books.filter(x=>skey(x)===skey(b)).length>1)return"#/series/"+encodeURIComponent(skey(b));return"#/"}
+ {const m=h.match(/^#\/series\/([^/]+)\/edit$/);if(m)return"#/series/"+m[1]}
  if(h==="#/edit/new")return draft&&draft.isbn?"#/add":"#/";
  if(h.startsWith("#/me/"))return"#/me";
  return"#/"}
@@ -613,7 +627,7 @@ function render(){
    document.querySelectorAll("#rows .rail").forEach((r,i)=>{r.scrollLeft=pos.x[i]||0});app.scrollTop=pos.y;return}
  }
  if(h==="/")return shelf();
- if(p[1]==="series")return series(decodeURIComponent(p[2]));
+ if(p[1]==="series")return p[3]==="edit"?seriesEdit(decodeURIComponent(p[2])):series(decodeURIComponent(p[2]));
  if(p[1]==="book"){const b=books.find(x=>x.id===p[2]);return p[3]==="edit"?edit(b,false):view(b)}
  if(p[1]==="edit")return draft?edit(draft,true):go("#/",true);
  if(p[1]==="add")return scan();
@@ -631,14 +645,14 @@ const money=v=>v.toLocaleString("zh-TW",{maximumFractionDigits:2});
 const isNew=t=>(t||0)>Date.now()-7*864e5;
 const hrefOf=x=>x.l.length>1?"#/series/"+encodeURIComponent(x.k):"#/book/"+x.first.id;
 const card=(x,rib)=>{const f=x.first,multi=x.l.length>1;rib=rib===undefined?(isNew(x.last)?"新加入":""):rib;
- return`<div class="card" data-go="${hrefOf(x)}"><div class="cv${multi?" stack":""}">${cover(f)}${multi?`<span class="badge">${x.l.length}</span>`:""}${rib?`<span class="ribbon">${esc(rib)}</span>`:""}</div><div class="t">${esc(f.series||(f.pending?"ISBN "+f.isbn:f.title))}</div><div class="s">${esc(f.author||"")}</div></div>`};
+ return`<div class="card" data-go="${hrefOf(x)}"><div class="cv${multi?" stack":""}">${cover(x.cv)}${multi?`<span class="badge">${x.l.length}</span>`:""}${rib?`<span class="ribbon">${esc(rib)}</span>`:""}</div><div class="t">${esc(f.series||(f.pending?"ISBN "+f.isbn:f.title))}</div><div class="s">${esc(f.author||"")}</div></div>`};
 const bookCard=b=>`<div class="card" data-go="#/book/${b.id}"><div class="cv">${cover(b)}${b.vol!=null?`<span class="badge">第 ${b.vol} 集</span>`:""}${isNew(b.date)?`<span class="ribbon">新加入</span>`:""}</div><div class="t">${esc(b.pending?"ISBN "+b.isbn:b.title)}</div></div>`;
 const rail=(title,items)=>items.length?`<section class="row"><div class="rowh"><h3>${esc(title)}</h3></div><div class="rail">${items.join("")}</div></section>`:"";
 let heroK=null;
 function hero(x){
  const f=x.first,multi=x.l.length>1,href=hrefOf(x);
  const meta=[f.author,multi?x.l.length+" 本":(f.vol!=null?"第 "+f.vol+" 集":"")].filter(Boolean);
- return`<section class="hero"><div class="hbg" aria-hidden="true">${cover(f)}</div><div class="hcv" data-go="${href}">${cover(f)}</div>
+ return`<section class="hero"><div class="hbg" aria-hidden="true">${cover(x.cv)}</div><div class="hcv" data-go="${href}">${cover(x.cv)}</div>
   <div class="hk">${isNew(x.last)?"最新收藏":"精選收藏"}</div><h1>${esc(f.series||(f.pending?"ISBN "+f.isbn:f.title))}</h1>
   ${meta.length?`<p class="hm">${meta.map(esc).join("<i>·</i>")}</p>`:""}
   <div class="hacts"><button class="btn play" data-go="${href}">${ic("book",18)}打開</button>${groups().length>1?`<button class="btn dim" id="shuf">${ic("refresh",18)}換一本</button>`:""}</div></section>`;
@@ -651,7 +665,7 @@ function renderRows(){
  const authors=[...au.entries()].filter(e=>e[1].length>1).sort((a,b)=>b[1].length-a[1].length).slice(0,3);
  $("#rows").innerHTML=
   rail("最近加入",recent.map(bookCard))+
-  (top.length>=3?rail("收藏最多的系列",top.map((x,i)=>`<div class="tcard" data-go="${hrefOf(x)}"><span class="num">${i+1}</span><div class="cv">${cover(x.first)}</div></div>`)):"")+
+  (top.length>=3?rail("收藏最多的系列",top.map((x,i)=>`<div class="tcard" data-go="${hrefOf(x)}"><span class="num">${i+1}</span><div class="cv">${cover(x.cv)}</div></div>`)):"")+
   rail("我的系列",multi.map(x=>card(x)))+
   authors.map(([a,l])=>rail(a+" 的作品",l.map(x=>card(x)))).join("");
 }
@@ -670,7 +684,7 @@ function shelf(){
  if(!books.length){app.innerHTML=`<div class="empty glass">${ic("book",44)}書架還是空的<br>點擊下方「掃描入庫」，<br>掃描書背的 ISBN 條碼，開始收藏第一本書。</div>`;return}
  const pend=books.filter(b=>b.pending||b.refill).length;
  const gs=groups().sort((a,b)=>b.last-a.last);
- const feat=gs.find(x=>x.k===heroK)||gs.find(x=>x.first.cover)||gs.find(x=>autoCover(x.first))||gs[0];heroK=feat.k;
+ const feat=gs.find(x=>x.k===heroK)||gs.find(x=>x.cv.cover)||gs.find(x=>autoCover(x.cv))||gs[0];heroK=feat.k;
  app.innerHTML=hero(feat)+`<div style="height:18px"></div>
  ${pend?`<div style="margin-bottom:12px;text-align:center"><button class="chip warn" id="pend">${ic("refresh",15)}${pend} 本待補資料，點此重新查詢</button></div>`:""}
  <div class="tools"><label class="search" style="margin:0">${ic("search",18)}<input id="q" type="search" placeholder="搜尋書名、作者、ISBN" value="${esc(query)}" enterkeyhint="search"></label></div>
@@ -702,16 +716,32 @@ function series(k){
    (open?`<div class="grid">${l.map(full).join("")}</div>`
         :`<div class="strip" data-tog="${esc(key)}">${l.map((b,j)=>`<div class="mini" style="z-index:${l.length-j}" title="${esc(b.vol!=null?"第 "+b.vol+" 集":b.title)}">${cover(b)}</div>`).join("")}</div>`)+`</section>`;
  };
- app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(f)}</div><div class="hcv">${cover(f)}</div><div class="hk">系列</div><h1>${esc(f.series||f.title)}</h1><p class="hm">${esc(f.author||"作者未填")}</p>
+ app.innerHTML=`<section class="hero sh"><div class="hbg" aria-hidden="true">${cover(g.cv)}</div><div class="hcv">${cover(g.cv)}</div><div class="hk">系列</div><h1>${esc(f.series||f.title)}</h1><p class="hm">${esc(f.author||"作者未填")}</p>
   <div class="pills"><span class="pill">${g.l.length} 本</span>${many?`<span class="pill">${cats.length} 個分類</span>`:""}</div>
   </section>`+cats.map(sec).join("");
 }
 function goSeries(name){const nh="#/series/"+encodeURIComponent(skeyS(name));if(location.hash===nh)route();else location.hash=nh}
-async function renameSeries(k){
- const l=books.filter(b=>skey(b)===k);if(!l.length)return;
- const old=l[0].series||l[0].title,nn=await dlg({title:"重新命名系列",input:old,placeholder:"系列名稱"});if(nn==null)return;
- const n=nn.trim();if(!n||n===old)return;
- l.forEach(b=>{b.series=n;b.updatedAt=Date.now()});save();goSeries(n);
+// 編輯系列：系列名稱＋從系列裡的書挑封面（整頁，和編輯書目同一種形式）
+function seriesEdit(k){
+ const g=groups().find(x=>x.k===k);if(!g){go("#/",true);return}
+ setTitle("編輯系列");
+ const name=g.first.series||g.first.title;let pick=g.cv.id;
+ const lab=b=>b.vol!=null?"第 "+b.vol+" 集":(b.pending?"ISBN "+b.isbn:b.title||"");
+ app.innerHTML=`<div class="pane glass"><div class="fm" style="margin-top:-14px">
+  <label>系列名稱</label><input id="s_name" value="${esc(name)}" placeholder="系列名稱">
+  <label>系列封面</label><p class="scvh">從系列裡的書挑一本，當作首頁與系列頁的封面。</p>
+  <div class="scvs" id="scvs">${g.l.map(b=>`<button type="button" class="scv${b.id===pick?" on":""}" data-scv="${esc(b.id)}" aria-pressed="${b.id===pick}"><div class="cv">${cover(b)}</div><span>${esc(lab(b))}</span></button>`).join("")}</div></div></div>`;
+ $("#scvs").onclick=e=>{const c=e.target.closest("[data-scv]");if(!c)return;pick=c.dataset.scv;
+  $("#scvs").querySelectorAll(".scv").forEach(x=>{const on=x.dataset.scv===pick;x.classList.toggle("on",on);x.setAttribute("aria-pressed",on)})};
+ const commit=async()=>{
+  const n=$("#s_name").value.trim();if(!n){await dlg({title:"請輸入系列名稱",msg:"系列名稱不能留白。",cancel:false,ok:"好"});return}
+  const now=Date.now();
+  g.l.forEach(b=>{let ch=false;if(n!==name){b.series=n;ch=true}if(b.scv!==pick){b.scv=pick;ch=true}if(ch)b.updatedAt=now});
+  save();toast("已儲存");
+  const nk=skeyS(n);if(nk===k){goBack();return}
+  go("#/series/"+encodeURIComponent(nk),true);
+ };
+ setActs([{id:"ok",icon:"check",label:"儲存變更",cls:"pri",fn:commit}]);
 }
 async function renameCat(k,c){
  const nn=await dlg({title:"重新命名分類",msg:"留空會把這個分類的書移回「本篇」。",input:c,placeholder:"分類名稱"});if(nn==null)return;
