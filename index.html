@@ -1221,7 +1221,8 @@ function settings(){
  <div class="pane glass"><h2>備份</h2><p class="sub">把藏書（含封面）存成檔案，或從備份檔還原。還原時只會加入較新或不存在的書。</p>
  <div class="acts"><button class="btn" id="x_out">${ic("download",18)}匯出備份</button><button class="btn" id="x_in">${ic("upload",18)}匯入還原</button></div><input type="file" id="x_f" accept="application/json,.json" hidden></div>
  <div class="pane glass"><h2>重新整理</h2><p class="sub">重新載入整個 App，抓取網站最新版本。從主畫面開啟時沒有瀏覽器的重新整理鍵，可以用這裡。</p>
- <div class="acts"><button class="btn" id="x_reload">${ic("refresh",18)}重新整理</button></div></div>
+ <div class="acts"><button class="btn" id="x_reload">${ic("refresh",18)}重新整理</button></div>
+ <p class="sub" style="margin:12px 0 0">目前的導航欄：liquid-tabbar v${esc(window.LiquidTabbar&&LiquidTabbar.version||"?")}</p></div>
 `;
  initSeg($("#seg"),setTheme);
  initSwitch($(".sw2"),on=>{navLabels=on;try{localStorage.setItem("bookshelf.navlabels",on?"1":"0")}catch(_){}
