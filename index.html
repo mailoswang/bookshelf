@@ -15,8 +15,8 @@
 <script>(function(){var t=null;try{t=localStorage.getItem("bookshelf.theme")}catch(e){}if(t==="auto")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";else if(t!=="light")t="dark";document.documentElement.dataset.theme=t;var cs=document.querySelector('meta[name="color-scheme"]');if(cs)cs.content=t})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.7.5/liquid-tabbar.min.css">
-<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar@v2.7.5/liquid-tabbar.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar-on-web@v2.7.5/liquid-tabbar.min.css">
+<script src="https://cdn.jsdelivr.net/gh/mailoswang/liquid-tabbar-on-web@v2.7.5/liquid-tabbar.min.js"></script>
 <style>
 :root{
  --gap:0px;
@@ -76,7 +76,7 @@ body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:calc(-1*var(-
 /* 頁面上下直接鋪滿，不做模糊或淡化；只有主畫面模式可視高度不足時（.short），底部補一條實色 */
 .edge2{display:none;position:fixed;left:0;right:0;bottom:0;height:145px;z-index:21;pointer-events:none}
 .short .edge2{display:block;background:linear-gradient(to top,var(--bg1) 0%,var(--bg1) 12%,color-mix(in srgb,var(--bg1) 55%,transparent) 55%,color-mix(in srgb,var(--bg1) 0%,transparent) 100%)}
-/* ===== 底部導航欄：liquid-tabbar（https://github.com/mailoswang/liquid-tabbar），這裡只把書櫃的主題色接過去 ===== */
+/* ===== 底部導航欄：liquid-tabbar（https://github.com/mailoswang/liquid-tabbar-on-web），這裡只把書櫃的主題色接過去 ===== */
 .ltb{--ltb-bottom:calc(var(--navb) + var(--kb,0px));--ltb-ink:var(--ink);--ltb-accent:var(--nav-on);--ltb-focus:var(--acc);
  --ltb-ind:var(--nav-ind);--ltb-lift-ring:var(--lift-ring);--ltb-lift-edge:var(--lift-edge);--ltb-lift-shadow:var(--lift-sh);
  --ltb-bg:var(--nav-bg);--ltb-rim:var(--nav-rim)}
