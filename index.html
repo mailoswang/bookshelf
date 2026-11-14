@@ -564,7 +564,9 @@ function renderNav(){
  nav=nav||new LiquidTabbar("#dock",{waitForPill:true,
   onSelect:a=>{if(a.act){nav.setActive(navCur);navTap=false;a.fn();return}navTap=true;a.fn()},
   onReselect:(a,i,{source})=>{if(source==="click"){navTap=true;a.fn()}else if(a.id==="home")a.fn();else if(a.id==="me"&&location.hash!=="#/me"){navTap=true;a.fn()}},
-  onSide:()=>{navTap=false;goBack()}});
+  onSide:()=>{navTap=false;goBack()},
+  minimizeOnScroll:true,scrollTarget:app});   // 頁面往下捲動時導航欄縮小，往上捲或回到頂端恢復（捲動的是 main，不是視窗）
+ nav.setMinimized(false);   // 換頁時恢復原尺寸
  nav.set({side:deep?{id:"back",label:"回上頁",icon:NI.back}:null,items,active:cur});
 }
 // 頁面自己的操作按鈕：浮在導航欄上方的小玻璃列（換頁時清掉）
